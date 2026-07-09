@@ -40,7 +40,10 @@
 }
 
 *{box-sizing:border-box}
-html,body{height:100%}
+/* this is a drag-to-trace interface: text selection and mobile tap/long-press
+   chrome (blue flash, callout menu) would only get in the way, everywhere */
+*{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+html,body{height:100%;-webkit-user-select:none;user-select:none}
 /* React mounts into #root; make it transparent to layout so body's flex
    centering (`.stage{margin:auto}`) still treats .stage etc. as direct children */
 #root{display:contents}
@@ -338,6 +341,34 @@ body.mode-anatomy .cell.down{fill:var(--mono-down-band)}
   transition:opacity .2s ease,background-color .35s ease,border-color .35s ease;
 }
 .cursor-ring.active{opacity:1}
+
+/* ---- mobile ---- */
+/* narrow screens: the mode control (centred on the full viewport) and the
+   top-right icon buttons (anchored to the right edge) start colliding well
+   before desktop breakpoints — drop the mode control to its own row below
+   them instead of trying to squeeze both onto one line */
+@media (max-width:640px){
+  .mode-ctl{top:66px}
+  .mode-ctl .opt{width:min(22vw,78px);padding:6px 0;font-size:12.5px}
+  body{padding-top:clamp(112px,18vh,176px)}
+  .eyebrow{font-size:9.5px;letter-spacing:.09em}
+  .theme-btn{width:36px;height:36px;top:16px}
+  .theme-btn svg{width:17px;height:17px}
+  .download-btn{right:58px}
+  .lang-btn{right:98px;font-size:11.5px}
+}
+/* short screens: the fixed bottom credit doesn't push content up, so make
+   sure everything above it actually fits instead — smaller board, tighter
+   gaps — rather than let it overlap the nav row / pagination underneath */
+@media (max-height:720px){
+  .board{width:min(72vw,300px,40vh)}
+  .stage{gap:clamp(6px,1.4vh,20px)}
+  .readout{min-height:0;gap:7px}
+  .tagline{min-height:0}
+  .nav-row{margin-top:6px}
+  .credit{bottom:4px;font-size:9.5px}
+  body{padding-bottom:clamp(22px,4vh,56px)}
+}
 
 @media (prefers-reduced-motion:reduce){
   .stage>*,.seg.enter,.cell.enter,.name.swap,.tagline.swap,.score span.pop,
