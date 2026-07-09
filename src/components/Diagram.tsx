@@ -15,7 +15,6 @@ export interface DiagramSvgRefs {
   mpLoseCellsRef: RefObject<SVGGElement>;
   finalCellRef: RefObject<SVGGElement>;
   warpathHitRef: RefObject<SVGPolylineElement>;
-  cursorRef: RefObject<SVGGElement>;
 }
 
 interface DiagramProps extends DiagramSvgRefs {
@@ -41,7 +40,6 @@ export function Diagram({
   mpLoseCellsRef,
   finalCellRef,
   warpathHitRef,
-  cursorRef,
 }: DiagramProps) {
   const bo = 2 * wins - 1;
   return (
@@ -120,7 +118,6 @@ export function Diagram({
             <polyline className="hit-poly" id="warpath-hit" ref={warpathHitRef} points="" />
           </g>
         </g>
-        <g id="cursor" ref={cursorRef} />
       </svg>
     </div>
   );

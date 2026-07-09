@@ -10,7 +10,6 @@ export interface DiagramRefs {
   svg: SVGSVGElement;
   cells: SVGGElement;
   path: SVGGElement;
-  cursor: SVGGElement;
   frame: SVGPolygonElement;
   finishA: SVGLineElement;
   finishB: SVGLineElement;
@@ -62,7 +61,6 @@ export class DiagramEngine {
   private curPart: PartKey | null = null;
   onPathChange: ((hasPath: boolean) => void) | null = null;
 
-  private tip: SVGCircleElement;
   private onPointerMove = (e: PointerEvent) => {
     if (this.mode === "anatomy") return; // anatomy is inspect-only
     const v = this.toViewBox(e);
@@ -84,12 +82,6 @@ export class DiagramEngine {
     this.refs = refs;
     this.reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     this.refs.frame.setAttribute("points", "48,240 240,48 432,240 240,432");
-
-    // persistent cursor node — moved every pointer event without rebuilding the path
-    this.tip = document.createElementNS(NS, "circle") as SVGCircleElement;
-    this.tip.setAttribute("id", "tip");
-    this.tip.setAttribute("r", "3");
-    this.refs.cursor.appendChild(this.tip);
   }
 
   mount() {
@@ -136,9 +128,8 @@ export class DiagramEngine {
     });
     this.partHandlers = [];
 
-    // undo the DOM writes from the constructor/renders, so a StrictMode
-    // dev remount (mount -> destroy -> mount) starts from a clean slate
-    this.tip.remove();
+    // undo the DOM writes from renders, so a StrictMode dev remount
+    // (mount -> destroy -> mount) starts from a clean slate
     const groups = [
       this.refs.cells,
       this.refs.path,
@@ -169,7 +160,6 @@ export class DiagramEngine {
     this.lastKey = "";
     this.renderPath([], "");
     if (this.mode === "anatomy") this.seedWarpath(); // keep the exhibit alive across format changes
-    this.moveTip(this.geo.X0, this.geo.CY);
     this.refreshLangDependent();
   }
 
@@ -254,12 +244,6 @@ export class DiagramEngine {
       this.renderPath(path, this.lastKey || ""); // rebuild only when the series changes,
       this.lastKey = key; // so enter-animations play uninterrupted
     }
-    this.moveTip(vx, vy);
-  }
-
-  private moveTip(vx: number, vy: number) {
-    this.tip.setAttribute("cx", String(vx));
-    this.tip.setAttribute("cy", String(vy));
   }
 
   private renderPath(path: Path, prevKey: string) {

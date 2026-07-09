@@ -150,7 +150,6 @@ body.mode-anatomy #anatomy{opacity:1;pointer-events:auto}
 #diagram{transition:filter .45s ease}
 body.mode-anatomy #diagram{cursor:default;filter:grayscale(1)}  /* anatomy is monochrome */
 body.mode-anatomy #lattice{opacity:1}  /* cell borders visible by default in anatomy */
-body.mode-anatomy #tip{opacity:0}
 #anatomy .hit{stroke:transparent;stroke-width:22;fill:none;cursor:pointer}
 .ana-part{transition:opacity .3s ease}
 .lod-line{
@@ -214,7 +213,6 @@ body.mode-anatomy #tip{opacity:0}
 .arrow-b{fill:var(--down)}
 .arrow-p{fill:var(--muted)}
 #start{fill:var(--muted)}
-#tip{stroke:var(--muted);stroke-width:1.25;fill:var(--bg)}
 
 .readout{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;min-height:178px}
 .score{
@@ -299,6 +297,20 @@ body.mode-anatomy #tip{opacity:0}
 .download-btn:disabled{opacity:.35;cursor:default}
 .download-btn:disabled:hover{color:var(--muted)}
 .lang-btn{right:66px;font-family:var(--sans);font-size:12.5px;font-weight:600;letter-spacing:.02em}
+
+/* ---- unified custom cursor ---- */
+/* only on real pointers: touch has no cursor concept, and forcing `none`
+   there would just leave people with no visual feedback at all */
+@media (pointer:fine){
+  *{cursor:none !important}
+}
+.cursor-ring{
+  position:fixed;top:0;left:0;width:16px;height:16px;
+  border-radius:50%;border:1.5px solid var(--muted);background:var(--bg);
+  pointer-events:none;z-index:9999;opacity:0;will-change:transform;
+  transition:opacity .2s ease,background-color .35s ease,border-color .35s ease;
+}
+.cursor-ring.active{opacity:1}
 
 @media (prefers-reduced-motion:reduce){
   .stage>*,.seg.enter,.cell.enter,.name.swap,.tagline.swap,.score span.pop,

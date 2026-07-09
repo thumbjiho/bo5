@@ -11,6 +11,7 @@ import { AnatomyPanel } from "./components/AnatomyPanel";
 import { ThemeButton } from "./components/ThemeButton";
 import { DownloadButton } from "./components/DownloadButton";
 import { LangButton } from "./components/LangButton";
+import { CursorRing } from "./components/CursorRing";
 
 const MODE_VALUES: Mode[] = ["home", "anatomy", "settings"];
 
@@ -34,7 +35,6 @@ export function App() {
   const mpLoseCellsRef = useRef<SVGGElement>(null!);
   const finalCellRef = useRef<SVGGElement>(null!);
   const warpathHitRef = useRef<SVGPolylineElement>(null!);
-  const cursorRef = useRef<SVGGElement>(null!);
 
   const readoutRef = useRef<HTMLDivElement>(null!);
   const scoreARef = useRef<HTMLSpanElement>(null!);
@@ -58,7 +58,6 @@ export function App() {
       svg: svgRef.current,
       cells: cellsRef.current,
       path: pathRef.current,
-      cursor: cursorRef.current,
       frame: frameRef.current,
       finishA: finishARef.current,
       finishB: finishBRef.current,
@@ -153,7 +152,6 @@ export function App() {
           mpLoseCellsRef={mpLoseCellsRef}
           finalCellRef={finalCellRef}
           warpathHitRef={warpathHitRef}
-          cursorRef={cursorRef}
         />
 
         <div className="panels">
@@ -179,6 +177,7 @@ export function App() {
       <ThemeButton />
       <LangButton lang={lang} onClick={() => setLang(lang === "en" ? "ko" : "en")} />
       <DownloadButton disabled={!hasPath} onClick={handleDownload} />
+      <CursorRing />
     </>
   );
 }
