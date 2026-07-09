@@ -1,7 +1,7 @@
 import type { Game, Lang, Mode, Path, PartKey } from "../types";
 import { nameFor } from "../data/names";
 import { I18N } from "../data/i18n";
-import { PARTS } from "../data/parts";
+import { PARTS, gameEntry } from "../data/parts";
 import { ended, makeGeometry, mirrorKey, pt, tally, buildCatalog, type Geometry, decide as decideGame } from "../lib/series";
 
 const NS = "http://www.w3.org/2000/svg";
@@ -21,6 +21,8 @@ export interface DiagramRefs {
   mpLoseCells: SVGGElement;
   finalCell: SVGGElement;
   warfrontCells: SVGGElement;
+  gameMarkers: SVGGElement;
+  dominanceLabels: SVGGElement;
 
   scoreA: HTMLElement;
   scoreB: HTMLElement;
@@ -59,6 +61,7 @@ export class DiagramEngine {
   private shownName = "";
   private catalog: string[] = [];
   private curPart: PartKey | null = null;
+  private curGameIndex: number | null = null; // 0-based column, mutually exclusive with curPart
   onPathChange: ((hasPath: boolean) => void) | null = null;
 
   private onPointerMove = (e: PointerEvent) => {
@@ -77,6 +80,7 @@ export class DiagramEngine {
     if (this.lastKey) this.showKey(mirrorKey(this.lastKey));
   };
   private partHandlers: { part: Element; enter: () => void; leave: () => void }[] = [];
+  private gamePartHandlers: { part: Element; enter: () => void; leave: () => void }[] = [];
 
   constructor(refs: DiagramRefs) {
     this.refs = refs;
@@ -94,25 +98,39 @@ export class DiagramEngine {
 
     svg.querySelectorAll<SVGGElement>(".ana-part").forEach((part) => {
       const key = part.getAttribute("data-part") as PartKey;
-      const enter = () => {
-        svg.classList.add("ana-dim");
-        svg.classList.add("focus-" + key);
-        part.classList.add("focused");
+      const { enter, leave } = this.wirePart(part, "focus-" + key, () => {
         this.curPart = key;
-        const fn = PARTS[key];
-        if (fn) this.setAna(fn(this.wins, this.lang), true);
-      };
-      const leave = () => {
-        svg.classList.remove("ana-dim");
-        svg.classList.remove("focus-" + key);
-        part.classList.remove("focused");
-        this.curPart = null;
-        this.setAna(I18N[this.lang].anaDefault, true);
-      };
+        this.curGameIndex = null;
+      }, () => PARTS[key]?.(this.wins, this.lang) ?? null);
       part.addEventListener("pointerenter", enter);
       part.addEventListener("pointerleave", leave);
       this.partHandlers.push({ part, enter, leave });
     });
+  }
+
+  // shared pointerenter/leave wiring for any `.ana-part`: dim the rest of the
+  // diagram, mark this part focused, select it (via `onSelect`), and show
+  // its name/description (via `getEntry`) — used for both the fixed set of
+  // named parts and the dynamically rebuilt per-game markers below.
+  private wirePart(part: Element, focusClass: string, onSelect: () => void, getEntry: () => [string, string] | null) {
+    const svg = this.refs.svg;
+    const enter = () => {
+      svg.classList.add("ana-dim");
+      svg.classList.add(focusClass);
+      part.classList.add("focused");
+      onSelect();
+      const entry = getEntry();
+      if (entry) this.setAna(entry, true);
+    };
+    const leave = () => {
+      svg.classList.remove("ana-dim");
+      svg.classList.remove(focusClass);
+      part.classList.remove("focused");
+      this.curPart = null;
+      this.curGameIndex = null;
+      this.setAna(I18N[this.lang].anaDefault, true);
+    };
+    return { enter, leave };
   }
 
   destroy() {
@@ -127,6 +145,11 @@ export class DiagramEngine {
       part.removeEventListener("pointerleave", leave);
     });
     this.partHandlers = [];
+    this.gamePartHandlers.forEach(({ part, enter, leave }) => {
+      part.removeEventListener("pointerenter", enter);
+      part.removeEventListener("pointerleave", leave);
+    });
+    this.gamePartHandlers = [];
 
     // undo the DOM writes from renders, so a StrictMode dev remount
     // (mount -> destroy -> mount) starts from a clean slate
@@ -140,6 +163,8 @@ export class DiagramEngine {
       this.refs.mpLoseCells,
       this.refs.finalCell,
       this.refs.warfrontCells,
+      this.refs.gameMarkers,
+      this.refs.dominanceLabels,
     ];
     groups.forEach((g) => {
       while (g.firstChild) g.removeChild(g.firstChild);
@@ -154,6 +179,7 @@ export class DiagramEngine {
     this.flushSeq++;
     this.buildLattice();
     this.buildAnatomyTicks();
+    this.buildGameMarkers();
     this.catalog = buildCatalog(n);
     this.seeded = false;
     this.frozen = [];
@@ -196,8 +222,10 @@ export class DiagramEngine {
 
   private refreshLangDependent() {
     const t = I18N[this.lang];
-    const fn = this.curPart ? PARTS[this.curPart] : null;
-    this.setAna(fn ? fn(this.wins, this.lang) : t.anaDefault, false);
+    let entry: [string, string] | null = null;
+    if (this.curGameIndex != null) entry = gameEntry(this.curGameIndex + 1, this.lang);
+    else if (this.curPart) entry = PARTS[this.curPart]?.(this.wins, this.lang) ?? null;
+    this.setAna(entry ?? t.anaDefault, false);
     this.shownName = ""; // force the big label to re-render
     this.updateReadout(this.lastKey ? (this.lastKey.split("") as Path) : []);
   }
@@ -507,24 +535,37 @@ export class DiagramEngine {
     group.appendChild(t);
   }
 
-  private anaCell(group: SVGGElement, a: number, b: number, cls: string) {
+  private dot(group: SVGGElement, x: number, y: number) {
+    const c = document.createElementNS(NS, "circle");
+    c.setAttribute("class", "dom-tie");
+    c.setAttribute("cx", String(x));
+    c.setAttribute("cy", String(y));
+    c.setAttribute("r", "3");
+    group.appendChild(c);
+  }
+
+  private anaCell(group: SVGGElement, a: number, b: number, cls: string, interactive = true) {
     const H = this.geo.H;
     const cx = 48 + (a + b + 1) * H;
     const cy = 240 - (a - b) * H;
     const poly = document.createElementNS(NS, "polygon");
     poly.setAttribute("points", `${cx - H},${cy} ${cx},${cy - H} ${cx + H},${cy} ${cx},${cy + H}`);
     poly.setAttribute("class", "ana-cell " + cls);
+    if (!interactive) poly.style.pointerEvents = "none";
     group.appendChild(poly);
   }
 
   // score ticks along the finish edges — one per possible exit crossing —
   // plus the match-point cell regions
   private buildAnatomyTicks() {
-    const { mountainLabels, valleyLabels, mpWinCells, mpLoseCells, finalCell, warfrontCells } = this.refs;
+    const { mountainLabels, valleyLabels, mpWinCells, mpLoseCells, finalCell, warfrontCells, dominanceLabels } =
+      this.refs;
     const H = this.geo.H;
-    [mountainLabels, valleyLabels, mpWinCells, mpLoseCells, finalCell, warfrontCells].forEach((g) => {
-      while (g.firstChild) g.removeChild(g.firstChild);
-    });
+    [mountainLabels, valleyLabels, mpWinCells, mpLoseCells, finalCell, warfrontCells, dominanceLabels].forEach(
+      (g) => {
+        while (g.firstChild) g.removeChild(g.firstChild);
+      }
+    );
     // the opening warfront: every series starts its first game in cell (0,0)
     this.anaCell(warfrontCells, 0, 0, "wf");
     for (let i = 0; i < this.wins; i++) {
@@ -535,10 +576,90 @@ export class DiagramEngine {
       // match-point cell bands (the shared corner cell is its own part, on top)
       this.anaCell(mpWinCells, this.wins - 1, i, "w");
       this.anaCell(mpLoseCells, i, this.wins - 1, "l");
+      // tie points along the river: cell (i,i) sits right on the dominance line
+      this.tick(dominanceLabels, this.geo.nodeX(2 * i), 240 - 12, `${i}:${i}`);
+      this.dot(dominanceLabels, this.geo.nodeX(2 * i), 240);
     }
     // the delta carries BOTH hatchings — ridge and cliff overlap here
     this.anaCell(finalCell, this.wins - 1, this.wins - 1, "w");
     this.anaCell(finalCell, this.wins - 1, this.wins - 1, "l");
+  }
+
+  // One marker per column (2*WINS-1 of them): column k is every scoreline
+  // (a,b with a+b=k) a series can be sitting on right before game k+1 is
+  // played — so hovering the dot below that column highlights the whole
+  // column and labels it "Game k+1". Rebuilt on every format change, so
+  // (unlike the fixed named parts wired once in mount()) each dot's hover
+  // listeners are wired here too, right after it's created.
+  private buildGameMarkers() {
+    const group = this.refs.gameMarkers;
+    while (group.firstChild) group.removeChild(group.firstChild);
+    this.gamePartHandlers.forEach(({ part, enter, leave }) => {
+      part.removeEventListener("pointerenter", enter);
+      part.removeEventListener("pointerleave", leave);
+    });
+    this.gamePartHandlers = [];
+
+    const H = this.geo.H;
+    const totalGames = 2 * this.wins - 1;
+    for (let k = 0; k < totalGames; k++) {
+      const minA = Math.max(0, k - (this.wins - 1));
+      const maxA = Math.min(k, this.wins - 1);
+
+      const part = document.createElementNS(NS, "g");
+      part.setAttribute("class", "ana-part");
+      part.setAttribute("data-part", "game");
+      for (let a = minA; a <= maxA; a++) {
+        // decorative only: pointer-events off so these cells never steal
+        // hover from whichever other named part they happen to overlap —
+        // only the dot itself (the .game-hit circle below) is interactive
+        this.anaCell(part as unknown as SVGGElement, a, k - a, "wf", false);
+      }
+
+      const vx = this.geo.nodeX(k);
+      const bottomCellY = this.geo.sy(2 * minA - k); // the column's lowest (most-losses) cell
+      const vertexY = bottomCellY + H; // that cell's bottom point — sits exactly on the frame's edge
+
+      // offset outward ALONG the diamond's own diagonal (not straight down),
+      // so the dots read as a continuation of the bottom edges rather than
+      // hanging under each cell: (-1,1)/√2 on the southwest edge, (1,1)/√2
+      // on the southeast edge, and straight down at the shared south apex
+      const nx = k < this.wins - 1 ? -Math.SQRT1_2 : k > this.wins - 1 ? Math.SQRT1_2 : 0;
+      const ny = k === this.wins - 1 ? 1 : Math.SQRT1_2;
+      const offset = 16;
+      const x = vx + nx * offset;
+      const dotY = vertexY + ny * offset;
+
+      const hit = document.createElementNS(NS, "circle");
+      hit.setAttribute("class", "game-hit");
+      hit.setAttribute("cx", String(x));
+      hit.setAttribute("cy", String(dotY));
+      hit.setAttribute("r", "13");
+      part.appendChild(hit);
+
+      const dot = document.createElementNS(NS, "circle");
+      dot.setAttribute("class", "game-dot");
+      dot.setAttribute("cx", String(x));
+      dot.setAttribute("cy", String(dotY));
+      dot.setAttribute("r", "4");
+      part.appendChild(dot);
+
+      group.appendChild(part);
+
+      const gameIndex = k;
+      const { enter, leave } = this.wirePart(
+        part,
+        "focus-game",
+        () => {
+          this.curGameIndex = gameIndex;
+          this.curPart = null;
+        },
+        () => gameEntry(gameIndex + 1, this.lang)
+      );
+      part.addEventListener("pointerenter", enter);
+      part.addEventListener("pointerleave", leave);
+      this.gamePartHandlers.push({ part, enter, leave });
+    }
   }
 
   private setAna(entry: [string, string], animate: boolean) {

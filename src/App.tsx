@@ -35,6 +35,8 @@ export function App() {
   const mpLoseCellsRef = useRef<SVGGElement>(null!);
   const finalCellRef = useRef<SVGGElement>(null!);
   const warpathHitRef = useRef<SVGPolylineElement>(null!);
+  const gameMarkersRef = useRef<SVGGElement>(null!);
+  const dominanceLabelsRef = useRef<SVGGElement>(null!);
 
   const readoutRef = useRef<HTMLDivElement>(null!);
   const scoreARef = useRef<HTMLSpanElement>(null!);
@@ -69,6 +71,8 @@ export function App() {
       mpLoseCells: mpLoseCellsRef.current,
       finalCell: finalCellRef.current,
       warfrontCells: warfrontCellsRef.current,
+      gameMarkers: gameMarkersRef.current,
+      dominanceLabels: dominanceLabelsRef.current,
       scoreA: scoreARef.current,
       scoreB: scoreBRef.current,
       seq: seqRef.current,
@@ -112,9 +116,10 @@ export function App() {
     const readout = readoutRef.current;
     const engine = engineRef.current;
     if (!svg || !readout || !engine) return;
-    const key = engine.getCurrentKey() || "diagram";
+    const key = engine.getCurrentKey();
+    const wl = key ? key.replace(/a/g, "w").replace(/b/g, "l") : "diagram";
     try {
-      await exportDiagramImage(svg, readout, `bo5-${key}.png`);
+      await exportDiagramImage(svg, readout, `bo5-${wl}.png`);
     } catch (err) {
       console.error("Failed to export diagram image", err);
     }
@@ -152,6 +157,8 @@ export function App() {
           mpLoseCellsRef={mpLoseCellsRef}
           finalCellRef={finalCellRef}
           warpathHitRef={warpathHitRef}
+          gameMarkersRef={gameMarkersRef}
+          dominanceLabelsRef={dominanceLabelsRef}
         />
 
         <div className="panels">
@@ -172,7 +179,9 @@ export function App() {
         </div>
       </section>
 
-      <p className="credit">umjo.me · 2026</p>
+      <p className="credit">
+        <a href="https://umjo.me" target="_blank" rel="noopener noreferrer">umjo.me</a> · 2026
+      </p>
 
       <ThemeButton />
       <LangButton lang={lang} onClick={() => setLang(lang === "en" ? "ko" : "en")} />

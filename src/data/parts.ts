@@ -128,3 +128,19 @@ export const PARTS: Record<PartKey, (wins: number, lang: Lang) => PartEntry> = {
             "up-right on a win, down-right on a loss.",
         ],
 };
+
+// One marker per possible game number (2×WINS-1 of them, format-aware count
+// but the wording itself doesn't need WINS). gameNumber is 1-based.
+export function gameEntry(gameNumber: number, lang: Lang): PartEntry {
+  return lang === "ko"
+    ? [
+        `게임 ${gameNumber}`,
+        `게임 ${gameNumber}을 앞두고 시리즈가 있을 수 있는 모든 스코어 — 이 칸들 중 하나에 있어야만 ` +
+          `게임 ${gameNumber}이 벌어집니다.`,
+      ]
+    : [
+        `Game ${gameNumber}`,
+        `Every scoreline a series can be sitting on right before game ${gameNumber} — ` +
+          `it has to be on one of these cells for game ${gameNumber} to happen at all.`,
+      ];
+}

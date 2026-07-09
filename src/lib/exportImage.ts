@@ -1,5 +1,5 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
-const SCALE = 2; // retina-ish output
+const SCALE = 4; // 2x retina baseline, doubled again for crisp downloads
 
 function cssVar(name: string, fallback: string): string {
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -70,17 +70,24 @@ interface NameSegment {
   color: string;
 }
 
-function readNameSegments(nameEl: HTMLElement, up: string, down: string, muted: string, ink: string): NameSegment[] {
+function readNameSegments(nameEl: HTMLElement): NameSegment[] {
   const spans = nameEl.querySelectorAll("span");
   if (spans.length === 0) {
-    return [{ text: nameEl.textContent || "", color: ink }];
+    return [{ text: nameEl.textContent || "", color: getComputedStyle(nameEl).color }];
   }
   return Array.from(nameEl.childNodes).map((node) => {
-    if (node.nodeType === Node.TEXT_NODE) return { text: node.textContent || "", color: ink };
+    if (node.nodeType === Node.TEXT_NODE) return { text: node.textContent || "", color: getComputedStyle(nameEl).color };
     const el = node as HTMLElement;
-    const color = el.classList.contains("w") ? up : el.classList.contains("l") ? down : muted;
-    return { text: el.textContent || "", color };
+    return { text: el.textContent || "", color: getComputedStyle(el).color };
   });
+}
+
+// Reads the live, currently-rendered font shorthand off a real element, so
+// the export matches whatever is actually on screen (responsive clamp()
+// sizes included) instead of a hand-picked size.
+function fontOf(el: Element, weight?: string): string {
+  const cs = getComputedStyle(el);
+  return `${weight ?? cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
 }
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
@@ -100,40 +107,71 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   return lines;
 }
 
-// Draws the score / name / tagline cluster with plain canvas text — avoids
-// the foreignObject-taints-canvas problem entirely (see rasterizeDiagram).
+function readSeqChips(readoutEl: HTMLElement): { colors: string[]; size: number; gap: number; radius: number } {
+  const chips = Array.from(readoutEl.querySelectorAll(".seq span"));
+  const seqEl = readoutEl.querySelector(".seq");
+  const first = chips[0] ? getComputedStyle(chips[0]) : null;
+  return {
+    colors: chips.map((c) => getComputedStyle(c).backgroundColor),
+    size: first ? parseFloat(first.width) : 13,
+    gap: seqEl ? parseFloat(getComputedStyle(seqEl).columnGap) : 7,
+    radius: first ? parseFloat(first.borderRadius) : 3,
+  };
+}
+
+// Draws the score / sequence chips / name / tagline cluster with plain
+// canvas text — avoids the foreignObject-taints-canvas problem entirely
+// (see rasterizeDiagram). Every size/weight/color here is read straight off
+// the live, on-screen elements via getComputedStyle, so the export matches
+// exactly what's currently rendered rather than a hand-picked layout.
 function drawReadout(readoutEl: HTMLElement, width: number): HTMLCanvasElement {
-  const sans = cssVar("--sans", "sans-serif");
-  const mono = cssVar("--mono", "monospace");
-  const up = cssVar("--up", "#2f9e5f");
-  const down = cssVar("--down", "#cc3f5c");
-  const ink = cssVar("--ink", "#191d1b");
   const muted = cssVar("--muted", "#6a726e");
 
-  const scoreA = readoutEl.querySelector(".s-a")?.textContent || "0";
-  const scoreB = readoutEl.querySelector(".s-b")?.textContent || "0";
+  const scoreAEl = readoutEl.querySelector(".s-a");
+  const scoreBEl = readoutEl.querySelector(".s-b");
+  const scoreA = scoreAEl?.textContent || "0";
+  const scoreB = scoreBEl?.textContent || "0";
+  const scoreFont = scoreAEl ? fontOf(scoreAEl) : "500 14px monospace";
+  const scoreColorA = scoreAEl ? getComputedStyle(scoreAEl).color : muted;
+  const scoreColorB = scoreBEl ? getComputedStyle(scoreBEl).color : muted;
+
+  const seq = readSeqChips(readoutEl);
+
   const nameEl = readoutEl.querySelector(".name") as HTMLElement | null;
-  const nameSegments = nameEl ? readNameSegments(nameEl, up, down, muted, ink) : [];
-  const tagline = readoutEl.querySelector(".tagline")?.textContent || "";
+  const nameSegments = nameEl ? readNameSegments(nameEl) : [];
+  const nameFont = nameEl ? fontOf(nameEl, "600") : "600 40px sans-serif";
+
+  const taglineEl = readoutEl.querySelector(".tagline") as HTMLElement | null;
+  const tagline = taglineEl?.textContent || "";
+  const taglineFont = taglineEl ? fontOf(taglineEl) : "14.5px sans-serif";
+  const taglineColor = taglineEl ? getComputedStyle(taglineEl).color : muted;
 
   const maxTextWidth = width - 64;
 
   // measure pass (1x canvas, font metrics only) to lay out lines
   const measure = document.createElement("canvas").getContext("2d")!;
-  measure.font = `600 40px ${sans}`;
-  const nameLineWidth = nameSegments.reduce((w, s) => w + measure.measureText(s.text).width, 0);
-  const nameScale = nameLineWidth > maxTextWidth ? maxTextWidth / nameLineWidth : 1;
-  const nameFontSize = Math.max(22, Math.floor(40 * nameScale));
+  measure.font = scoreFont;
+  const scoreSize = parseFloat(scoreFont.split(" ")[1]) || 14;
 
-  measure.font = `14.5px ${sans}`;
+  measure.font = nameFont;
+  const nameSize = parseFloat(nameFont.split(" ")[1]) || 40;
+
+  measure.font = taglineFont;
   const taglineLines = tagline ? wrapText(measure, tagline, maxTextWidth) : [];
+  const taglineLineH = Math.round(taglineEl ? parseFloat(getComputedStyle(taglineEl).lineHeight) : taglineSize(taglineFont) * 1.4);
 
-  const scoreH = 34;
-  const nameH = nameFontSize + 20;
-  const taglineLineH = 21;
-  const gap = 14;
+  const gap = readoutEl ? parseFloat(getComputedStyle(readoutEl).rowGap || getComputedStyle(readoutEl).gap) || 12 : 12;
+  const scoreH = scoreSize * 1.2;
+  const seqH = seq.colors.length ? seq.size : 0;
+  const nameH = nameSize * 1.15;
   const height =
-    24 + scoreH + gap + nameH + (taglineLines.length ? gap + taglineLines.length * taglineLineH : 0) + 24;
+    28 +
+    scoreH +
+    (seqH ? gap + seqH : 0) +
+    gap +
+    nameH +
+    (taglineLines.length ? gap + taglineLines.length * taglineLineH : 0) +
+    28;
 
   const canvas = document.createElement("canvas");
   canvas.width = width * SCALE;
@@ -143,29 +181,46 @@ function drawReadout(readoutEl: HTMLElement, width: number): HTMLCanvasElement {
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
 
-  let y = 24 + scoreH * 0.7;
   const cx = width / 2;
+  let y = 28 + scoreH * 0.8;
 
   // score: "A : B", each half coloured, centred as a unit
-  ctx.font = `500 15px ${mono}`;
+  ctx.font = scoreFont;
   const scoreAw = ctx.measureText(scoreA).width;
   const sepW = ctx.measureText(" : ").width;
   const scoreBw = ctx.measureText(scoreB).width;
-  const scoreTotal = scoreAw + sepW + scoreBw;
-  let sx = cx - scoreTotal / 2;
+  let sx = cx - (scoreAw + sepW + scoreBw) / 2;
   ctx.textAlign = "left";
-  ctx.fillStyle = up;
+  ctx.fillStyle = scoreColorA;
   ctx.fillText(scoreA, sx, y);
   sx += scoreAw;
   ctx.fillStyle = muted;
   ctx.fillText(" : ", sx, y);
   sx += sepW;
-  ctx.fillStyle = down;
+  ctx.fillStyle = scoreColorB;
   ctx.fillText(scoreB, sx, y);
   ctx.textAlign = "center";
 
-  y += scoreH * 0.3 + gap + nameFontSize * 0.85;
-  ctx.font = `600 ${nameFontSize}px ${sans}`;
+  if (seq.colors.length) {
+    y += seqH * 0.5 + gap;
+    const totalChipW = seq.colors.length * seq.size + (seq.colors.length - 1) * seq.gap;
+    let chipX = cx - totalChipW / 2;
+    const chipY = y - seq.size * 0.85;
+    for (const color of seq.colors) {
+      ctx.fillStyle = color;
+      if (typeof ctx.roundRect === "function") {
+        ctx.beginPath();
+        ctx.roundRect(chipX, chipY, seq.size, seq.size, seq.radius);
+        ctx.fill();
+      } else {
+        ctx.fillRect(chipX, chipY, seq.size, seq.size);
+      }
+      chipX += seq.size + seq.gap;
+    }
+  }
+
+  y += gap + nameH * 0.72;
+  ctx.font = nameFont;
   const totalNameW = nameSegments.reduce((w, s) => w + ctx.measureText(s.text).width, 0);
   let nx = cx - totalNameW / 2;
   ctx.textAlign = "left";
@@ -177,9 +232,9 @@ function drawReadout(readoutEl: HTMLElement, width: number): HTMLCanvasElement {
   ctx.textAlign = "center";
 
   if (taglineLines.length) {
-    y += nameH * 0.35 + gap;
-    ctx.font = `14.5px ${sans}`;
-    ctx.fillStyle = muted;
+    y += nameH * 0.3 + gap;
+    ctx.font = taglineFont;
+    ctx.fillStyle = taglineColor;
     for (const line of taglineLines) {
       ctx.fillText(line, cx, y);
       y += taglineLineH;
@@ -187,6 +242,10 @@ function drawReadout(readoutEl: HTMLElement, width: number): HTMLCanvasElement {
   }
 
   return canvas;
+}
+
+function taglineSize(font: string): number {
+  return parseFloat(font.split(" ")[1]) || 14.5;
 }
 
 // Composites the live diagram SVG and the score/name/tagline readout into

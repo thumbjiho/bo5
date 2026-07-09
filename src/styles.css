@@ -3,6 +3,7 @@
   --frame:#d6dbd8; --grid:#e6eae8;
   --up:#2f9e5f; --up-band:rgba(47,158,95,.16);
   --down:#cc3f5c; --down-band:rgba(204,63,92,.13);
+  --mono-up-band:rgba(25,29,27,.24); --mono-down-band:rgba(25,29,27,.06);
   --card:#ffffff; --edge:#e4e8e6;
   --glass:rgba(255,255,255,.58); --glass-edge:rgba(25,29,27,.08); --thumb:#ffffff;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
@@ -14,6 +15,7 @@
     --frame:#2b322f; --grid:#1f2523;
     --up:#4bc47f; --up-band:rgba(75,196,127,.17);
     --down:#f06a83; --down-band:rgba(240,106,131,.16);
+    --mono-up-band:rgba(238,241,239,.26); --mono-down-band:rgba(238,241,239,.07);
     --card:#151a18; --edge:#242b28;
     --glass:rgba(21,26,24,.55); --glass-edge:rgba(255,255,255,.09); --thumb:#2b332f;
   }
@@ -23,6 +25,7 @@
   --frame:#d6dbd8; --grid:#e6eae8;
   --up:#2f9e5f; --up-band:rgba(47,158,95,.16);
   --down:#cc3f5c; --down-band:rgba(204,63,92,.13);
+  --mono-up-band:rgba(25,29,27,.24); --mono-down-band:rgba(25,29,27,.06);
   --card:#ffffff; --edge:#e4e8e6;
   --glass:rgba(255,255,255,.58); --glass-edge:rgba(25,29,27,.08); --thumb:#ffffff;
 }
@@ -31,6 +34,7 @@
   --frame:#2b322f; --grid:#1f2523;
   --up:#4bc47f; --up-band:rgba(75,196,127,.17);
   --down:#f06a83; --down-band:rgba(240,106,131,.16);
+  --mono-up-band:rgba(238,241,239,.26); --mono-down-band:rgba(238,241,239,.07);
   --card:#151a18; --edge:#242b28;
   --glass:rgba(21,26,24,.55); --glass-edge:rgba(255,255,255,.09); --thumb:#2b332f;
 }
@@ -157,9 +161,7 @@ body.mode-anatomy #lattice{opacity:1}  /* cell borders visible by default in ana
   opacity:.4;
   transition:stroke .25s ease,stroke-width .25s ease,opacity .25s ease;
 }
-.ana-part.focused .lod-line{opacity:1}
-@keyframes march{to{stroke-dashoffset:-24}}
-.ana-part.focused .lod-line{stroke:var(--ink);stroke-width:2;animation:march 1.6s linear infinite}
+.ana-part.focused .lod-line{opacity:1;stroke:var(--ink);stroke-width:2}
 .edge-line{
   stroke-width:2;opacity:.3;stroke-linecap:round;
   transition:opacity .3s ease,stroke-width .3s ease;
@@ -172,17 +174,34 @@ body.mode-anatomy #lattice{opacity:1}  /* cell borders visible by default in ana
 .edge-labels text{font-family:var(--mono);font-size:11px;font-weight:500}
 .ana-part[data-part="mountain"] .edge-labels text{fill:var(--up)}
 .ana-part[data-part="valley"] .edge-labels text{fill:var(--down)}
+.ana-part[data-part="dominance"] .edge-labels text{fill:var(--ink);text-anchor:middle}
+.dom-tie{fill:var(--ink)}
 .ana-cell{cursor:pointer;transition:opacity .3s ease;stroke-width:1.4}
-.hatch-w-line{stroke:var(--up);stroke-width:1.1}
-.hatch-l-line{stroke:var(--down);stroke-width:1.1}
-.ana-cell.w{fill:url(#hatch-w);stroke:var(--up)}
-.ana-cell.l{fill:url(#hatch-l);stroke:var(--down)}
+/* anatomy stays achromatic under its grayscale filter, so win/loss are told
+   apart by tone (ink = dark/bold, muted = mid-gray/soft) instead of hue —
+   var(--up)/var(--down) grayscale to near-identical luminance and vanish.
+   A solid background wash carries the contrast; the thin diagonal line on
+   its own is too sparse to read as a color at a glance. */
+.hatch-w-bg{fill:var(--ink);opacity:.28}
+.hatch-l-bg{fill:var(--muted);opacity:.06}
+.hatch-w-line{stroke:var(--ink);stroke-width:1.1}
+.hatch-l-line{stroke:var(--muted);stroke-width:1.1}
+.ana-cell.w{fill:url(#hatch-w);stroke:var(--ink)}
+.ana-cell.l{fill:url(#hatch-l);stroke:var(--muted)}
 .ana-part .ana-cell{opacity:0}          /* hatching appears only on hover */
 .ana-part.focused .ana-cell{opacity:.9}
 .hit-poly{fill:none;stroke:transparent;stroke-width:28;cursor:pointer}
 #bf-hit{fill:transparent;cursor:pointer}
 .ana-cell.wf{fill:var(--muted);stroke:var(--muted)}
 #anatomy .ana-part.focused .ana-cell.wf{opacity:.3}
+/* per-game markers below the diamond's bottom edge — always faintly
+   visible (unlike .ana-cell) since they're the thing to discover and hover */
+.game-hit{fill:transparent;stroke:none;cursor:pointer}
+.game-dot{
+  fill:var(--bg);stroke:var(--muted);stroke-width:1.5;
+  transition:fill .25s ease,stroke .25s ease,r .2s ease;
+}
+.ana-part.focused .game-dot{fill:var(--ink);stroke:var(--ink);r:5}
 /* battlefield focus lights the whole arena; warpath focus keeps the traced line lit */
 #diagram.ana-dim.focus-battlefield #frame{opacity:1;stroke:var(--ink)}
 #diagram.ana-dim.focus-battlefield #lattice{opacity:1}
@@ -197,6 +216,12 @@ body.mode-anatomy #lattice{opacity:1}  /* cell borders visible by default in ana
 .cell{stroke:none}
 .cell.up{fill:var(--up-band)}
 .cell.down{fill:var(--down-band)}
+/* the traced path survives into anatomy mode (seeded/left over from Home)
+   and sits inside the grayscale filter — up-band/down-band are translucent
+   pastel washes that grayscale to nearly the same light gray, so swap in
+   ink-based tones with a real luminance gap instead */
+body.mode-anatomy .cell.up{fill:var(--mono-up-band)}
+body.mode-anatomy .cell.down{fill:var(--mono-down-band)}
 @keyframes cell-in{from{opacity:0}to{opacity:1}}
 .cell.enter{animation:cell-in .4s ease-out both}
 .finish{opacity:0;stroke-width:3;stroke-linecap:round;transition:opacity .45s ease}
@@ -269,8 +294,10 @@ body.mode-anatomy #lattice{opacity:1}  /* cell borders visible by default in ana
   position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:5;
   margin:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;
   color:var(--muted);opacity:.55;white-space:nowrap;pointer-events:none;
-  user-select:none;
+  user-select:none;transition:opacity .2s ease;
 }
+.credit a{color:inherit;text-decoration:none;pointer-events:auto;border-bottom:1px solid currentColor}
+.credit:has(a:hover){opacity:.9}
 
 .theme-btn{
   position:fixed;top:18px;right:18px;width:40px;height:40px;border-radius:50%;
@@ -314,7 +341,7 @@ body.mode-anatomy #lattice{opacity:1}  /* cell borders visible by default in ana
 
 @media (prefers-reduced-motion:reduce){
   .stage>*,.seg.enter,.cell.enter,.name.swap,.tagline.swap,.score span.pop,
-  .ana-name.swap,.ana-desc.swap,.ana-part.focused .lod-line{animation:none}
+  .ana-name.swap,.ana-desc.swap{animation:none}
   .seq span,.finish,.theme-btn,#frame,.seg,#lattice,body,#diagram,
   .seg-ctl,.seg-ctl .thumb,.panels>*,.board,#anatomy,.ana-part,.lod-line,#cells,#path{transition:none}
 }

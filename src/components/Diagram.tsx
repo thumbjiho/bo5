@@ -15,6 +15,8 @@ export interface DiagramSvgRefs {
   mpLoseCellsRef: RefObject<SVGGElement>;
   finalCellRef: RefObject<SVGGElement>;
   warpathHitRef: RefObject<SVGPolylineElement>;
+  gameMarkersRef: RefObject<SVGGElement>;
+  dominanceLabelsRef: RefObject<SVGGElement>;
 }
 
 interface DiagramProps extends DiagramSvgRefs {
@@ -40,6 +42,8 @@ export function Diagram({
   mpLoseCellsRef,
   finalCellRef,
   warpathHitRef,
+  gameMarkersRef,
+  dominanceLabelsRef,
 }: DiagramProps) {
   const bo = 2 * wins - 1;
   return (
@@ -62,28 +66,12 @@ export function Diagram({
             <path d="M0,0 L9,5 L0,10 Z" className="arrow-p" />
           </marker>
           <pattern id="hatch-w" width={6} height={6} patternUnits="userSpaceOnUse" patternTransform="rotate(90)">
+            <rect width={6} height={6} className="hatch-w-bg" />
             <line x1={0} y1={0} x2={0} y2={6} className="hatch-w-line" />
-            <animateTransform
-              attributeName="patternTransform"
-              type="translate"
-              from="0 0"
-              to="6 0"
-              dur="1.2s"
-              repeatCount="indefinite"
-              additive="sum"
-            />
           </pattern>
           <pattern id="hatch-l" width={6} height={6} patternUnits="userSpaceOnUse" patternTransform="rotate(0)">
+            <rect width={6} height={6} className="hatch-l-bg" />
             <line x1={0} y1={0} x2={0} y2={6} className="hatch-l-line" />
-            <animateTransform
-              attributeName="patternTransform"
-              type="translate"
-              from="0 0"
-              to="6 0"
-              dur="1.2s"
-              repeatCount="indefinite"
-              additive="sum"
-            />
           </pattern>
         </defs>
         <g id="cells" ref={cellsRef} />
@@ -112,11 +100,13 @@ export function Diagram({
           <g className="ana-part" data-part="final" id="final-cell" ref={finalCellRef} />
           <g className="ana-part" data-part="dominance">
             <line className="lod-line" x1={48} y1={240} x2={432} y2={240} />
+            <g className="edge-labels" id="dominance-labels" ref={dominanceLabelsRef} />
             <line className="hit" x1={48} y1={240} x2={432} y2={240} />
           </g>
           <g className="ana-part" data-part="warpath">
             <polyline className="hit-poly" id="warpath-hit" ref={warpathHitRef} points="" />
           </g>
+          <g id="game-markers" ref={gameMarkersRef} />
         </g>
       </svg>
     </div>
