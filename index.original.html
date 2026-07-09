@@ -1,0 +1,1109 @@
+<nav class="seg-ctl n3 mode-ctl" id="mode-ctl" role="tablist" aria-label="Page mode">
+  <span class="thumb" aria-hidden="true"></span>
+  <button class="opt active" type="button" role="tab" aria-selected="true" data-value="home">Home</button>
+  <button class="opt" type="button" role="tab" aria-selected="false" data-value="anatomy">Anatomy</button>
+  <button class="opt" type="button" role="tab" aria-selected="false" data-value="settings">Settings</button>
+</nav>
+
+<section class="stage">
+  <p class="eyebrow" id="eyebrow">A Visual Analysis of Best-of-N Series</p>
+
+  <div class="board">
+    <svg id="diagram" viewBox="0 0 480 480" role="img"
+         aria-label="Best-of-5 series diagram. Move the cursor across the diamond to trace a series.">
+      <defs>
+        <marker id="arrow-a" markerWidth="14" markerHeight="14" refX="4" refY="5"
+                orient="auto" markerUnits="userSpaceOnUse">
+          <path d="M0,0 L9,5 L0,10 Z" class="arrow-a"></path>
+        </marker>
+        <marker id="arrow-b" markerWidth="14" markerHeight="14" refX="4" refY="5"
+                orient="auto" markerUnits="userSpaceOnUse">
+          <path d="M0,0 L9,5 L0,10 Z" class="arrow-b"></path>
+        </marker>
+        <marker id="arrow-p" markerWidth="14" markerHeight="14" refX="4" refY="5"
+                orient="auto" markerUnits="userSpaceOnUse">
+          <path d="M0,0 L9,5 L0,10 Z" class="arrow-p"></path>
+        </marker>
+        <pattern id="hatch-w" width="6" height="6" patternUnits="userSpaceOnUse"
+                 patternTransform="rotate(90)">
+          <line x1="0" y1="0" x2="0" y2="6" class="hatch-w-line"></line>
+          <animateTransform attributeName="patternTransform" type="translate"
+            from="0 0" to="6 0" dur="1.2s" repeatCount="indefinite" additive="sum"/>
+        </pattern>
+        <pattern id="hatch-l" width="6" height="6" patternUnits="userSpaceOnUse"
+                 patternTransform="rotate(0)">
+          <line x1="0" y1="0" x2="0" y2="6" class="hatch-l-line"></line>
+          <animateTransform attributeName="patternTransform" type="translate"
+            from="0 0" to="6 0" dur="1.2s" repeatCount="indefinite" additive="sum"/>
+        </pattern>
+      </defs>
+      <g id="cells"></g>
+      <g id="lattice"></g>
+      <polygon id="frame" points=""></polygon>
+      <line id="finish-a" class="finish up" x1="240" y1="48" x2="432" y2="240"></line>
+      <line id="finish-b" class="finish down" x1="432" y1="240" x2="240" y2="432"></line>
+      <g id="path"></g>
+      <g id="anatomy" aria-hidden="true">
+        <g class="ana-part" data-part="battlefield">
+          <polygon id="bf-hit" points="48,240 240,48 432,240 240,432"></polygon>
+        </g>
+        <g class="ana-part" data-part="warfront" id="warfront-cells"></g>
+        <g class="ana-part" data-part="mountain">
+          <line class="edge-line up-edge" x1="240" y1="48" x2="432" y2="240"></line>
+          <g class="edge-labels" id="mountain-labels"></g>
+          <line class="hit" x1="240" y1="48" x2="432" y2="240"></line>
+        </g>
+        <g class="ana-part" data-part="valley">
+          <line class="edge-line down-edge" x1="432" y1="240" x2="240" y2="432"></line>
+          <g class="edge-labels" id="valley-labels"></g>
+          <line class="hit" x1="432" y1="240" x2="240" y2="432"></line>
+        </g>
+        <g class="ana-part" data-part="mpwin" id="mpwin-cells"></g>
+        <g class="ana-part" data-part="mplose" id="mplose-cells"></g>
+        <g class="ana-part" data-part="final" id="final-cell"></g>
+        <g class="ana-part" data-part="dominance">
+          <line class="lod-line" x1="48" y1="240" x2="432" y2="240"></line>
+          <line class="hit" x1="48" y1="240" x2="432" y2="240"></line>
+        </g>
+        <g class="ana-part" data-part="warpath">
+          <polyline class="hit-poly" id="warpath-hit" points=""></polyline>
+        </g>
+      </g>
+      <g id="cursor"></g>
+    </svg>
+  </div>
+
+  <div class="panels">
+    <div class="readout">
+      <div class="score" id="score"><span class="s-a">0</span><i>:</i><span class="s-b">0</span></div>
+      <div class="seq" id="seq" aria-hidden="true"></div>
+      <h1 class="name" id="name">Trace a series</h1>
+      <p class="tagline" id="tagline"></p>
+      <div class="nav-row">
+        <button class="nav-btn" id="nav-prev" aria-label="Previous outcome" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14.5 6 9 12l5.5 6"></path>
+          </svg>
+        </button>
+        <button class="nav-btn" id="nav-flip" aria-label="Flip perspective" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 10h10L12 4Z" fill="currentColor"></path>
+            <path d="M7 14h10l-5 6Z" fill="currentColor" opacity=".45"></path>
+          </svg>
+        </button>
+        <button class="nav-btn" id="nav-next" aria-label="Next outcome" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9.5 6 15 12l-5.5 6"></path>
+          </svg>
+        </button>
+      </div>
+      <p class="page" id="page">– / 20</p>
+    </div>
+    <div class="settings-panel">
+      <p class="panel-label" id="fmt-label">Series format</p>
+      <nav class="seg-ctl n3" id="fmt-ctl" role="tablist" aria-label="Series format">
+        <span class="thumb" aria-hidden="true"></span>
+        <button class="opt" type="button" role="tab" aria-selected="false" data-value="2">Bo3</button>
+        <button class="opt active" type="button" role="tab" aria-selected="true" data-value="3">Bo5</button>
+        <button class="opt" type="button" role="tab" aria-selected="false" data-value="4">Bo7</button>
+      </nav>
+      <p class="panel-caption" id="fmt-caption">3×3 grid · first to 3 wins</p>
+    </div>
+    <div class="anatomy-panel">
+      <p class="panel-label" id="ana-label">Anatomy</p>
+      <h2 class="ana-name" id="ana-name">Hover the diagram</h2>
+      <p class="ana-desc" id="ana-desc">Point at a part to see what it does.</p>
+    </div>
+  </div>
+</section>
+
+<p class="credit">umjo.me · 2026</p>
+
+<button class="theme-btn" id="theme-btn" aria-label="Toggle dark or light mode">
+  <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"></circle>
+    <path d="M12 2.8v2.2M12 19v2.2M2.8 12H5M19 12h2.2M5.4 5.4 7 7M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6"></path>
+  </svg>
+  <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M20.2 14.4A8.4 8.4 0 0 1 9.6 3.8 8.8 8.8 0 1 0 20.2 14.4Z"></path>
+  </svg>
+</button>
+
+<button class="theme-btn lang-btn" id="lang-btn" aria-label="Switch language · 언어 전환">한</button>
+
+<button class="theme-btn lock-btn" id="lock-btn" aria-label="Toggle interaction lock" aria-pressed="false">
+  <svg class="icon-unlocked" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+    <rect x="5.5" y="10.5" width="13" height="9" rx="2.2" fill="currentColor" stroke="none"></rect>
+    <path d="M8.5 10.5V8a3.5 3.5 0 0 1 6.8-1.2"></path>
+  </svg>
+  <svg class="icon-locked" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+    <rect x="5.5" y="10.5" width="13" height="9" rx="2.2" fill="currentColor" stroke="none"></rect>
+    <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"></path>
+  </svg>
+</button>
+
+<style>
+  :root{
+    --bg:#f6f8f7; --ink:#191d1b; --muted:#6a726e;
+    --frame:#d6dbd8; --grid:#e6eae8;
+    --up:#2f9e5f; --up-band:rgba(47,158,95,.16);
+    --down:#cc3f5c; --down-band:rgba(204,63,92,.13);
+    --card:#ffffff; --edge:#e4e8e6;
+    --glass:rgba(255,255,255,.58); --glass-edge:rgba(25,29,27,.08); --thumb:#ffffff;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0f1312; --ink:#eef1ef; --muted:#8c948f;
+      --frame:#2b322f; --grid:#1f2523;
+      --up:#4bc47f; --up-band:rgba(75,196,127,.17);
+      --down:#f06a83; --down-band:rgba(240,106,131,.16);
+      --card:#151a18; --edge:#242b28;
+      --glass:rgba(21,26,24,.55); --glass-edge:rgba(255,255,255,.09); --thumb:#2b332f;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#f6f8f7; --ink:#191d1b; --muted:#6a726e;
+    --frame:#d6dbd8; --grid:#e6eae8;
+    --up:#2f9e5f; --up-band:rgba(47,158,95,.16);
+    --down:#cc3f5c; --down-band:rgba(204,63,92,.13);
+    --card:#ffffff; --edge:#e4e8e6;
+    --glass:rgba(255,255,255,.58); --glass-edge:rgba(25,29,27,.08); --thumb:#ffffff;
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1312; --ink:#eef1ef; --muted:#8c948f;
+    --frame:#2b322f; --grid:#1f2523;
+    --up:#4bc47f; --up-band:rgba(75,196,127,.17);
+    --down:#f06a83; --down-band:rgba(240,106,131,.16);
+    --card:#151a18; --edge:#242b28;
+    --glass:rgba(21,26,24,.55); --glass-edge:rgba(255,255,255,.09); --thumb:#2b332f;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  /* the page manages its own fit; never show scrollbar chrome */
+  html{scrollbar-width:none}
+  html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    display:flex;
+    min-height:100dvh;
+    /* top-heavy padding nudges the whole stage downward, clear of the fixed control */
+    padding:clamp(84px,13vh,150px) 24px clamp(28px,4.5vh,56px);
+    transition:background-color .35s ease,color .35s ease;
+  }
+  .stage{
+    /* margin:auto centres like flex center but never pushes the top of an
+       overflowing page underneath the fixed segmented control */
+    margin:auto;
+    display:flex;flex-direction:column;align-items:center;
+    gap:clamp(14px,2.5vh,36px);width:100%;max-width:560px;
+  }
+  @keyframes fade-up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  /* `backwards` (not `both`): a lingering forwards-fill would pin transform
+     and block the settings-mode scale on .board */
+  .stage>*{animation:fade-up .65s cubic-bezier(.22,.8,.3,1) backwards}
+  .stage>.board{animation-delay:.09s}
+  .stage>.panels{animation-delay:.18s}
+
+  /* ---- liquid-glass segmented control ---- */
+  .seg-ctl{
+    /* equal 1fr columns keep every option — and the thumb — perfectly aligned */
+    position:relative;display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;
+    padding:4px;border-radius:999px;
+    background:var(--glass);border:1px solid var(--glass-edge);
+    -webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);
+    box-shadow:0 10px 30px rgba(0,0,0,.10),inset 0 1px 0 rgba(255,255,255,.18);
+    transition:background-color .35s ease,border-color .35s ease;
+  }
+  .seg-ctl .thumb{
+    position:absolute;top:4px;bottom:4px;left:4px;border-radius:999px;
+    background:var(--thumb);box-shadow:0 2px 8px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.22);
+    transition:transform .45s cubic-bezier(.3,1.25,.4,1),background-color .35s ease;
+  }
+  .seg-ctl.n2 .thumb{width:calc(50% - 4px)}
+  .seg-ctl.n3 .thumb{width:calc((100% - 8px)/3)}
+  .seg-ctl .opt{
+    position:relative;z-index:1;border:0;background:none;cursor:pointer;
+    padding:7px 22px;border-radius:999px;font-family:var(--sans);font-size:13.5px;font-weight:600;
+    color:var(--muted);letter-spacing:.01em;white-space:nowrap;text-align:center;
+    line-height:20px;height:34px;   /* fixed metrics: Hangul/Latin swap can't change the pill */
+    transition:color .25s ease;
+  }
+  .seg-ctl .opt.active{color:var(--ink)}
+  .seg-ctl .opt:focus-visible{outline:2px solid var(--up);outline-offset:2px}
+  .mode-ctl{
+    position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:10;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.18);   /* no drop shadow */
+  }
+  /* fixed option width so toggling KO/EN never shifts the control */
+  .mode-ctl .opt{width:96px;padding:7px 0}
+
+  /* ---- mode switching ---- */
+  .panels{display:grid;justify-items:center;width:100%}
+  .panels>*{grid-area:1/1;transition:opacity .35s ease,transform .5s cubic-bezier(.2,.8,.3,1)}
+  .settings-panel{
+    display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:10px;
+    opacity:0;transform:translateY(12px);pointer-events:none;
+  }
+  body.mode-settings .settings-panel{opacity:1;transform:none;pointer-events:auto}
+  body.mode-settings .readout,
+  body.mode-anatomy .readout{opacity:0;transform:translateY(-6px);pointer-events:none}
+  .anatomy-panel{
+    display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:10px;
+    text-align:center;opacity:0;transform:translateY(12px);pointer-events:none;
+  }
+  body.mode-anatomy .anatomy-panel{opacity:1;transform:none;pointer-events:auto}
+  .ana-name{margin:0;font-size:24px;font-weight:600;letter-spacing:-.01em}
+  .ana-name.swap{animation:swap-in .28s cubic-bezier(.2,.7,.3,1) both}
+  .ana-desc{margin:0;font-size:13.5px;line-height:1.5;color:var(--muted);max-width:46ch;min-height:4.5em}
+  .ana-desc.swap{animation:swap-in .34s .05s cubic-bezier(.2,.7,.3,1) both}
+  .panel-label{
+    margin:0;font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);font-weight:500;
+  }
+  .panel-caption{margin:0;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+  body.mode-settings .board{transform:scale(.75)}
+  body.mode-anatomy .board{transform:scale(1.2)}
+  .eyebrow{
+    margin:0;font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--muted);text-align:center;font-weight:500;
+    white-space:nowrap;
+    height:18px;line-height:18px;   /* fixed metrics: Hangul/Latin swap can't push the page */
+  }
+
+  .board{
+    width:min(78vw,440px,46vh);   /* also bounded by height so the page never scrolls */
+    transition:transform .55s cubic-bezier(.3,.9,.3,1);transform-origin:center;
+  }
+  #diagram{display:block;width:100%;height:auto;overflow:visible;cursor:crosshair;touch-action:none}
+
+  #frame{fill:none;stroke:var(--frame);stroke-width:1.5;stroke-linejoin:round;transition:stroke .35s ease}
+  #lattice{opacity:0;transition:opacity .45s ease}
+  #lattice line{stroke:var(--grid);stroke-width:1}
+  body.mode-settings #lattice{opacity:1}
+
+  /* ---- anatomy view ---- */
+  #anatomy{opacity:0;pointer-events:none;transition:opacity .45s ease}
+  body.mode-anatomy #anatomy{opacity:1;pointer-events:auto}
+  #diagram{transition:filter .45s ease}
+  body.mode-anatomy #diagram{cursor:default;filter:grayscale(1)}  /* anatomy is monochrome */
+  body.mode-anatomy #lattice{opacity:1}  /* cell borders visible by default in anatomy */
+  body.mode-anatomy #tip{opacity:0}
+  #anatomy .hit{stroke:transparent;stroke-width:22;fill:none;cursor:pointer}
+  .ana-part{transition:opacity .3s ease}
+  .lod-line{
+    stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 7;stroke-linecap:round;
+    opacity:.4;
+    transition:stroke .25s ease,stroke-width .25s ease,opacity .25s ease;
+  }
+  .ana-part.focused .lod-line{opacity:1}
+  @keyframes march{to{stroke-dashoffset:-24}}
+  .ana-part.focused .lod-line{stroke:var(--ink);stroke-width:2;animation:march 1.6s linear infinite}
+  .edge-line{
+    stroke-width:2;opacity:.3;stroke-linecap:round;
+    transition:opacity .3s ease,stroke-width .3s ease;
+  }
+  .edge-line.up-edge{stroke:var(--up)}
+  .edge-line.down-edge{stroke:var(--down)}
+  .ana-part.focused .edge-line{opacity:1;stroke-width:3.5}
+  .edge-labels{opacity:0;transition:opacity .35s ease}
+  .ana-part.focused .edge-labels{opacity:1}
+  .edge-labels text{font-family:var(--mono);font-size:11px;font-weight:500}
+  .ana-part[data-part="mountain"] .edge-labels text{fill:var(--up)}
+  .ana-part[data-part="valley"] .edge-labels text{fill:var(--down)}
+  .ana-cell{cursor:pointer;transition:opacity .3s ease;stroke-width:1.4}
+  .hatch-w-line{stroke:var(--up);stroke-width:1.1}
+  .hatch-l-line{stroke:var(--down);stroke-width:1.1}
+  .ana-cell.w{fill:url(#hatch-w);stroke:var(--up)}
+  .ana-cell.l{fill:url(#hatch-l);stroke:var(--down)}
+  .ana-part .ana-cell{opacity:0}          /* hatching appears only on hover */
+  .ana-part.focused .ana-cell{opacity:.9}
+  .hit-poly{fill:none;stroke:transparent;stroke-width:28;cursor:pointer}
+  #bf-hit{fill:transparent;cursor:pointer}
+  .ana-cell.wf{fill:var(--muted);stroke:var(--muted)}
+  #anatomy .ana-part.focused .ana-cell.wf{opacity:.3}
+  /* battlefield focus lights the whole arena; warpath focus keeps the traced line lit */
+  #diagram.ana-dim.focus-battlefield #frame{opacity:1;stroke:var(--ink)}
+  #diagram.ana-dim.focus-battlefield #lattice{opacity:1}
+  #diagram.ana-dim.focus-warpath #path{opacity:1}
+  /* hovering a part fades everything else back */
+  #cells,#path,#frame{transition:opacity .3s ease}
+  #diagram.ana-dim #cells,#diagram.ana-dim #lattice,
+  #diagram.ana-dim #frame,#diagram.ana-dim #path{opacity:.15}
+  #diagram.ana-dim .finish.show{opacity:.15}
+  #diagram.ana-dim .ana-part:not(.focused){opacity:.2}
+
+  .cell{stroke:none}
+  .cell.up{fill:var(--up-band)}
+  .cell.down{fill:var(--down-band)}
+  @keyframes cell-in{from{opacity:0}to{opacity:1}}
+  .cell.enter{animation:cell-in .4s ease-out both}
+  .finish{opacity:0;stroke-width:3;stroke-linecap:round;transition:opacity .45s ease}
+  .finish.up{stroke:var(--up)}
+  .finish.down{stroke:var(--down)}
+  .finish.show{opacity:1}
+  .seg{fill:none;stroke:var(--muted);stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;
+       transition:stroke .5s ease}
+  @keyframes draw{from{stroke-dashoffset:var(--len)}to{stroke-dashoffset:0}}
+  .seg.enter{stroke-dasharray:var(--len) var(--len);animation:draw .26s cubic-bezier(.3,.7,.3,1) both}
+  #path.won-up .seg{stroke:var(--up)}
+  #path.won-down .seg{stroke:var(--down)}
+  .arrow-a{fill:var(--up)}
+  .arrow-b{fill:var(--down)}
+  .arrow-p{fill:var(--muted)}
+  #start{fill:var(--muted)}
+  #tip{stroke:var(--muted);stroke-width:1.25;fill:var(--bg)}
+
+  .readout{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;min-height:178px}
+  .score{
+    font-family:var(--mono);font-size:14px;letter-spacing:.05em;color:var(--muted);
+    font-variant-numeric:tabular-nums;display:flex;gap:.15em;align-items:baseline;
+  }
+  .score i{font-style:normal;opacity:.55}
+  .score span{display:inline-block}
+  .score .s-a{color:var(--up)}
+  .score .s-b{color:var(--down)}
+  @keyframes pop{0%{transform:scale(1)}45%{transform:scale(1.3)}100%{transform:scale(1)}}
+  .score span.pop{animation:pop .32s ease-out}
+  .name{
+    margin:0;font-size:clamp(30px,7vw,46px);font-weight:600;letter-spacing:-.02em;
+    line-height:1.02;text-wrap:balance;
+  }
+  .name.pending{color:var(--muted);font-weight:500;letter-spacing:-.01em}
+  .name .w{color:var(--up)}
+  .name .l{color:var(--down)}
+  .name .sep{color:var(--muted);font-weight:400;margin:0 .05em;opacity:.6}
+  @keyframes swap-in{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+  .name.swap{animation:swap-in .28s cubic-bezier(.2,.7,.3,1) both}
+  .tagline{
+    margin:0;font-size:14.5px;line-height:1.45;color:var(--muted);
+    max-width:42ch;min-height:2.9em;   /* two lines reserved: no shift across languages */
+  }
+  .tagline b{font-weight:600}
+  .tagline .up{color:var(--up)}
+  .tagline .down{color:var(--down)}
+  .tagline.swap{animation:swap-in .34s .06s cubic-bezier(.2,.7,.3,1) both}
+  .nav-row{display:flex;gap:10px;margin-top:14px}
+  .nav-btn{
+    width:36px;height:36px;border-radius:50%;border:1px solid var(--edge);
+    background:var(--card);color:var(--muted);cursor:pointer;padding:0;
+    display:flex;align-items:center;justify-content:center;
+    transition:color .2s ease,border-color .2s ease,opacity .25s ease,
+      transform .15s ease,background-color .35s ease;
+  }
+  .nav-btn:hover:not(:disabled){color:var(--ink)}
+  .nav-btn:active:not(:disabled){transform:scale(.9)}
+  .nav-btn:disabled{opacity:.35;cursor:default}
+  .nav-btn:focus-visible{outline:2px solid var(--up);outline-offset:2px}
+  .nav-btn svg{width:16px;height:16px}
+  .page{
+    margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.06em;
+    color:var(--muted);font-variant-numeric:tabular-nums;
+  }
+  .seq{display:flex;gap:7px;min-height:14px}
+  .seq span{width:13px;height:13px;border-radius:3px;transition:transform .12s ease}
+  .seq span.up{background:var(--up)}
+  .seq span.down{background:var(--down)}
+
+  .credit{
+    position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:5;
+    margin:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;
+    color:var(--muted);opacity:.55;white-space:nowrap;pointer-events:none;
+    user-select:none;
+  }
+
+  .theme-btn{
+    position:fixed;top:18px;right:18px;width:40px;height:40px;border-radius:50%;
+    border:1px solid var(--edge);background:var(--card);color:var(--muted);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;
+    transition:color .25s ease,border-color .25s ease,background-color .35s ease,transform .25s ease;
+  }
+  .theme-btn:hover{color:var(--ink);transform:rotate(18deg)}
+  .theme-btn:focus-visible{outline:2px solid var(--up);outline-offset:2px}
+  .theme-btn svg{width:19px;height:19px}
+  .icon-sun{display:none}
+  .icon-moon{display:block}
+  @media (prefers-color-scheme:dark){
+    .icon-sun{display:block}
+    .icon-moon{display:none}
+  }
+  :root[data-theme="dark"] .icon-sun{display:block}
+  :root[data-theme="dark"] .icon-moon{display:none}
+  :root[data-theme="light"] .icon-sun{display:none}
+  :root[data-theme="light"] .icon-moon{display:block}
+
+  .lock-btn{right:66px}
+  .lang-btn{right:114px;font-family:var(--sans);font-size:12.5px;font-weight:600;letter-spacing:.02em}
+  @keyframes lock-blink{
+    0%,100%{transform:none;color:var(--muted);border-color:var(--edge)}
+    20%,60%{transform:scale(1.14);color:var(--down);border-color:var(--down)}
+    40%,80%{transform:scale(1)}
+  }
+  .lock-btn.blink{animation:lock-blink .55s ease}
+  .icon-locked{display:none}
+  body.locked .lock-btn{color:var(--ink);border-color:var(--muted)}
+  body.locked .lock-btn .icon-locked{display:block}
+  body.locked .lock-btn .icon-unlocked{display:none}
+  body.locked #diagram{cursor:default}
+  body.locked #tip{opacity:0}
+
+  @media (prefers-reduced-motion:reduce){
+    .stage>*,.seg.enter,.cell.enter,.name.swap,.tagline.swap,.score span.pop,
+    .ana-name.swap,.ana-desc.swap,.ana-part.focused .lod-line,.lock-btn.blink{animation:none}
+    .seq span,.finish,.theme-btn,#frame,.seg,#lattice,body,#diagram,
+    .seg-ctl,.seg-ctl .thumb,.panels>*,.board,#anatomy,.ana-part,.lod-line,#cells,#path{transition:none}
+  }
+</style>
+
+<script>
+(function(){
+  // The diamond is an N×N grid of small squares rotated 45° (N = wins to
+  // clinch: Bo3→2, Bo5→3, Bo7→4). Path nodes are CELL CENTRES: state (a,b)
+  // — a games won, b games lost, both <N — sits at the centre of its cell.
+  // Each game moves centre → next centre; the clinching game exits through
+  // the winner's edge of the diamond.
+  var WINS=3;                               // set via setFormat()
+  var H=64, CY=240, X0=112;                 // cell half-diagonal, centre y, first node x
+  var nodeX=function(k){return X0+k*H;};    // k = games played
+  var sy=function(d){return CY-d*H;};       // d = a-b (win differential)
+
+  var NS="http://www.w3.org/2000/svg";
+  var REDUCED=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var svg=document.getElementById("diagram");
+  var gCells=document.getElementById("cells");
+  var edgeA=document.getElementById("finish-a");
+  var edgeB=document.getElementById("finish-b");
+  var warpathHit=document.getElementById("warpath-hit");
+  var gPath=document.getElementById("path");
+  var gCursor=document.getElementById("cursor");
+  var frame=document.getElementById("frame");
+  var elName=document.getElementById("name");
+  var elTag=document.getElementById("tagline");
+  var elSeq=document.getElementById("seq");
+  var elScore=document.getElementById("score");
+  var navPrev=document.getElementById("nav-prev");
+  var navFlip=document.getElementById("nav-flip");
+  var navNext=document.getElementById("nav-next");
+  var elPage=document.getElementById("page");
+  var lockBtn=document.getElementById("lock-btn");
+
+  // Every outcome told from one team's perspective: [name, tagline EN, tagline KO].
+  var NAMES={
+    // 3:0
+    "aaa":  ["Sweep","Three straight. Never in doubt.","3연승. 흔들림 없는 압승."],
+    // 3:1
+    "baaa": ["Wake-Up Call","Drop the opener, then three without mercy.","1차전을 내주고, 자비 없는 3연승."],
+    "abaa": ["Speed Bump","One slip mid-cruise, otherwise routine.","순항 중 만난 과속방지턱 하나."],
+    "aaba": ["Stutter Step","A wobble at match point, then the close.","매치포인트에서 잠깐 휘청, 그리고 마무리."],
+    // 3:2
+    "aabba":["The Great Escape","Up 2–0, dragged to the brink, out in five.","2–0 리드, 벼랑 끝까지 몰렸다가 5차전 탈출."],
+    "ababa":["Flip Flop","Trade blows every game — and take the last one.","매 게임 주고받다 마지막을 가져오다."],
+    "abbaa":["Turnaround","Down 1–2, flip the series on its head.","1–2 열세에서 시리즈를 뒤집다."],
+    "baaba":["Dogfight","Nothing comes easy. Claw out game five.","쉬운 게 하나 없는 진흙탕, 5차전을 긁어내다."],
+    "babaa":["Late Surge","Trail all series, arrive right on time.","내내 끌려가다 정확히 제시간에 도착."],
+    "bbaaa":["Reverse Sweep","Down 0–2. Three straight. Legend.","0–2에서 3연승. 전설."],
+    // 2:3
+    "bbaab":["Heartbreaker","All the way back from 0–2 — and it slips.","0–2에서 다 따라잡고 — 마지막에 놓치다."],
+    "babab":["Flip Flopped","Trade blows every game — and lose the last one.","매 게임 주고받다 마지막을 내주다."],
+    "baabb":["Collapse","Lead 2–1, then watch it all come down.","2–1 리드가 무너져 내리다."],
+    "abbab":["Quicksand","Win the opener, sink slowly ever after.","첫 승 이후 서서히 가라앉다."],
+    "ababb":["Fizzle","Ahead early, empty at the end.","앞서다가 끝에서 방전."],
+    "aabbb":["Reverse Swept","2–0 up. Then three games of grief.","2–0 리드. 그리고 3연패의 비극."],
+    // 1:3
+    "abbb": ["False Dawn","Take game one. Lose everything after.","1차전 승리는 거짓 새벽이었다."],
+    "babb": ["Dead Cat Bounce","One flicker of life in a losing cause.","지는 싸움 속 단 한 번의 반짝임."],
+    "bbab": ["Last Gasp","Stave off the sweep once, fall the next game.","스윕만 겨우 면한 마지막 숨."],
+    // 0:3
+    "bbb":  ["Swept","Three straight. Nothing to be done.","3연패. 손쓸 도리가 없었다."]
+  };
+
+  // Bo5 has the full table; Bo3/Bo7 keep only the patterns that generalise
+  function nameFor(key){
+    var e=null;
+    if(WINS===3 && NAMES[key]) e=NAMES[key];
+    else{
+      var A=new Array(WINS+1).join("a"), B=new Array(WINS+1).join("b");
+      if(key===A) e=["Sweep","Straight games. Never in doubt.","전승. 흔들림 없는 압승."];
+      else if(key===B) e=["Swept","Straight games. Nothing to be done.","전패. 손쓸 도리가 없었다."];
+      else if(key===new Array(WINS).join("b")+A)
+        e=["Reverse Sweep","Down 0–"+(WINS-1)+". "+WINS+" straight. Legend.",
+           "0–"+(WINS-1)+"에서 "+WINS+"연승. 전설."];
+      else if(key===new Array(WINS).join("a")+B)
+        e=["Reverse Swept",(WINS-1)+"–0 up. Then "+WINS+" games of grief.",
+           (WINS-1)+"–0 리드. 그리고 "+WINS+"연패의 비극."];
+    }
+    return e? [e[0], LANG==="ko"? e[2] : e[1]] : null;
+  }
+
+  // ---- diamond frame ----
+  frame.setAttribute("points","48,240 240,48 432,240 240,432");
+
+  // ---- path helpers ----
+  function tally(p){var a=0,b=0;for(var i=0;i<p.length;i++){p[i]==="a"?a++:b++;}return {a:a,b:b};}
+  function ended(p){var t=tally(p);return t.a>=WINS||t.b>=WINS;}
+  function nodeD(p){var t=tally(p);return t.a-t.b;}      // differential after path
+
+  // frozen decisions for columns left of the cursor
+  var frozen=[];
+  var lastKey=null;                    // path currently drawn (avoids re-render per mousemove)
+  var flushSeq=0;                      // guards the deferred winner-colour flush
+  var seeded=false;                    // true while showing the untouched starter step
+
+  function decide(p,vy){                                  // up (a) if cursor above current node
+    return vy < sy(nodeD(p)) ? "a" : "b";
+  }
+
+  function recompute(vx,vy){
+    seeded=false;                      // the user is tracing now
+    var g=(vx-X0)/H;
+    var liveCol=Math.max(0,Math.min(2*WINS-2,Math.floor(g)));
+
+    // cursor retreated: drop frozen columns to the right
+    while(frozen.length>liveCol) frozen.pop();
+    // cursor advanced across skipped columns: fill using current height
+    while(frozen.length<liveCol && !ended(frozen)){
+      frozen.push(decide(frozen,vy));
+    }
+
+    var path=frozen.slice();
+    if(!ended(path) && path.length<2*WINS-1){
+      path.push(decide(path,vy));      // live step under the cursor
+    }
+    var key=path.join("");
+    if(key!==lastKey){
+      renderPath(path,lastKey||"");    // rebuild only when the series changes,
+      lastKey=key;                     // so enter-animations play uninterrupted
+    }
+    moveTip(vx,vy);
+  }
+
+  function pt(p,i){                       // centre of the cell occupied after i games
+    var a=0,b=0;for(var k=0;k<i;k++){p[k]==="a"?a++:b++;}
+    return {x:nodeX(a+b),y:sy(a-b)};
+  }
+
+  function renderPath(path,prevKey){
+    while(gPath.firstChild) gPath.removeChild(gPath.firstChild);
+    while(gCells.firstChild) gCells.removeChild(gCells.firstChild);
+
+    var n=path.length, done=ended(path), t=tally(path), key=path.join("");
+    // games shared with the previous render keep their final state;
+    // everything from `fresh` onward gets an enter animation
+    var fresh=0;
+    while(fresh<key.length && fresh<prevKey.length && key[fresh]===prevKey[fresh]) fresh++;
+
+    // shade the cell each game was played from, in that game's winner colour
+    for(var i=0;i<n;i++){
+      var c=pt(path,i);
+      var poly=document.createElementNS(NS,"polygon");
+      poly.setAttribute("points",
+        (c.x-H)+","+c.y+" "+c.x+","+(c.y-H)+" "+(c.x+H)+","+c.y+" "+c.x+","+(c.y+H));
+      poly.setAttribute("class","cell "+(path[i]==="a"?"up":"down")+(i>=fresh?" enter":""));
+      if(i>fresh) poly.style.animationDelay=((i-fresh)*70)+"ms";
+      gCells.appendChild(poly);
+    }
+
+    // segments centre → centre; the clinching game becomes the exit arrow.
+    // the live (unconfirmed) segment stays grey until the series is decided
+    var inner=done? n-1 : n;
+    for(var j=0;j<inner;j++){
+      var live=!done && j===inner-1;
+      addSeg("seg",path[j],pt(path,j),pt(path,j+1),live, j>=fresh, j-fresh, live);
+    }
+    if(done && n>0){
+      var p0=pt(path,n-1), dir=path[n-1]==="a"? -1 : 1, ov=H*0.875;
+      addSeg("seg",path[n-1],p0,{x:p0.x+ov,y:p0.y+ov*dir},true,(n-1)>=fresh,(n-1)-fresh,false);
+    }
+
+    // winner's finish edge
+    edgeA.classList.toggle("show",done && t.a===WINS);
+    edgeB.classList.toggle("show",done && t.b===WINS);
+
+    // the anatomy warpath hover follows whatever series is actually drawn
+    var wpPts="";
+    if(n>0){
+      wpPts=nodeX(0)+","+CY;
+      var lastNode=done? n-1 : n;
+      for(var q=1;q<=lastNode;q++){var pq=pt(path,q);wpPts+=" "+pq.x+","+pq.y;}
+      if(done){
+        var pe=pt(path,n-1), ov2=H*0.875, d2=path[n-1]==="a"? -1 : 1;
+        wpPts+=" "+(pe.x+ov2)+","+(pe.y+ov2*d2);
+      }
+    }
+    warpathHit.setAttribute("points",wpPts);
+
+    // on the clinch, flush the whole grey path in the winner's colour.
+    // applied one frame late so freshly built segments transition from grey
+    var seq=++flushSeq;
+    if(done){
+      var wonUp=t.a===WINS;
+      requestAnimationFrame(function(){requestAnimationFrame(function(){
+        if(seq!==flushSeq) return;               // a newer render superseded us
+        gPath.classList.toggle("won-up",wonUp);
+        gPath.classList.toggle("won-down",!wonUp);
+      });});
+    }else{
+      gPath.classList.remove("won-up");
+      gPath.classList.remove("won-down");
+    }
+
+    // start dot
+    var s=document.createElementNS(NS,"circle");
+    s.setAttribute("id","start");s.setAttribute("cx",nodeX(0));s.setAttribute("cy",CY);
+    s.setAttribute("r",4);gPath.insertBefore(s,gPath.firstChild);
+
+    updateReadout(path);
+  }
+
+  // persistent cursor node — moved every pointer event without rebuilding the path
+  var tip=document.createElementNS(NS,"circle");
+  tip.setAttribute("id","tip");tip.setAttribute("r",3);
+  gCursor.appendChild(tip);
+  function moveTip(vx,vy){
+    tip.setAttribute("cx",vx);tip.setAttribute("cy",vy);
+  }
+
+  function addSeg(cls,type,p0,p1,isLast,entering,order,pending){
+    var ln=document.createElementNS(NS,"line");
+    ln.setAttribute("x1",p0.x);ln.setAttribute("y1",p0.y);
+    ln.setAttribute("x2",p1.x);ln.setAttribute("y2",p1.y);
+    ln.setAttribute("class",cls+" "+(type==="a"?"up":"down")
+      +(pending?" pending":"")+(entering?" enter":""));
+    if(entering){
+      ln.style.setProperty("--len",(Math.hypot(p1.x-p0.x,p1.y-p0.y)+1).toFixed(1));
+      if(order>0) ln.style.animationDelay=(order*70)+"ms";
+    }
+    if(isLast){
+      // the arrowhead is a marker, which SVG places instantly — attach it only
+      // once the draw animation has finished so it rides in with the line
+      var m="url(#arrow-"+(pending?"p":(type==="a"?"a":"b"))+")";
+      if(entering && !REDUCED){
+        var attach=function(){ln.setAttribute("marker-end",m);};
+        ln.addEventListener("animationend",attach,{once:true});
+        setTimeout(attach,700);          // safety net if the event never fires
+      }else{
+        ln.setAttribute("marker-end",m);
+      }
+    }
+    gPath.appendChild(ln);
+  }
+
+  function retrigger(el,cls){                     // restart a CSS animation
+    el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls);
+  }
+  var shownName="";                               // what the big label currently shows
+
+  function updateReadout(path){
+    var t=tally(path), key=path.join(""), done=ended(path);
+    var sa=elScore.querySelector(".s-a"), sb=elScore.querySelector(".s-b");
+    if(sa.textContent!==String(t.a)){sa.textContent=t.a;retrigger(sa,"pop");}
+    if(sb.textContent!==String(t.b)){sb.textContent=t.b;retrigger(sb,"pop");}
+
+    // sequence chips
+    while(elSeq.firstChild) elSeq.removeChild(elSeq.firstChild);
+    for(var i=0;i<path.length;i++){
+      var sp=document.createElementNS("http://www.w3.org/1999/xhtml","span");
+      sp.className=path[i]==="a"?"up":"down";
+      elSeq.appendChild(sp);
+    }
+
+    var entry=done? nameFor(key) : null;
+    var nameKey=entry? "n:"+entry[0] : (path.length? "s:"+key : "idle");
+
+    if(nameKey!==shownName){
+      shownName=nameKey;
+      while(elName.firstChild) elName.removeChild(elName.firstChild);
+      if(entry){
+        elName.appendChild(document.createTextNode(entry[0]));
+        elTag.textContent=entry[1];
+        retrigger(elTag,"swap");
+      }else if(path.length>0){
+        // running W–L tape of the series so far
+        for(var k=0;k<path.length;k++){
+          if(k>0){
+            var sep=document.createElement("span");
+            sep.className="sep";sep.textContent="–";
+            elName.appendChild(sep);
+          }
+          var g=document.createElement("span");
+          g.className=path[k]==="a"?"w":"l";
+          g.textContent=path[k]==="a"?"W":"L";
+          elName.appendChild(g);
+        }
+        elTag.textContent="";
+      }else{
+        elName.appendChild(document.createTextNode(I18N[LANG].trace));
+        elTag.innerHTML=I18N[LANG].hint;    // the how-to lives in the subtitle slot
+        retrigger(elTag,"swap");
+      }
+      retrigger(elName,"swap");
+    }
+    elName.classList.toggle("pending",!entry);
+
+    // outcome navigation is only meaningful on a finished series
+    navPrev.disabled=!done;
+    navNext.disabled=!done;
+    navFlip.disabled=(path.length===0);
+
+    // pagination: position within all possible outcomes of this format
+    if(done){
+      var idx=CATALOG.indexOf(key);
+      elPage.textContent=(idx+1)+" / "+CATALOG.length;
+    }else{
+      elPage.textContent="– / "+CATALOG.length;
+    }
+  }
+
+  // ---- pointer → viewBox coordinates ----
+  function toViewBox(evt){
+    var p=svg.createSVGPoint();p.x=evt.clientX;p.y=evt.clientY;
+    return p.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  svg.addEventListener("pointermove",function(e){
+    if(MODE==="anatomy"||LOCKED) return;   // anatomy is inspect-only; lock freezes tracing
+    var v=toViewBox(e);recompute(v.x,v.y);
+  });
+  svg.addEventListener("pointerdown",function(e){
+    if(MODE==="anatomy") return;
+    if(LOCKED){retrigger(lockBtn,"blink");return;}   // remind why nothing happens
+    var v=toViewBox(e);recompute(v.x,v.y);
+  });
+
+  // ---- outcome navigation (◀ flip ▶) ----
+  // catalogue of every finished series for the current format, ordered like
+  // the reference chart: score groups top-to-bottom, mirror-symmetric within
+  var CATALOG=[];
+  function mirrorKey(k){
+    var s="";for(var i=0;i<k.length;i++)s+=k[i]==="a"?"b":"a";return s;
+  }
+  function buildCatalog(){
+    // green outcomes ordered by score group then key; the losing half is the
+    // reversed mirror, so every step across the middle flips the graph
+    // symmetrically and the list ends on Swept
+    var greens=[];
+    (function gen(prefix,a,b){
+      if(a===WINS){greens.push(prefix);return;}
+      if(b===WINS) return;
+      gen(prefix+"a",a+1,b);gen(prefix+"b",a,b+1);
+    })("",0,0);
+    greens.sort(function(x,y){
+      var bx=tally(x.split("")).b, by=tally(y.split("")).b;
+      if(bx!==by) return bx-by;
+      return x<y? -1 : 1;
+    });
+    CATALOG=greens.concat(greens.slice().reverse().map(mirrorKey));
+  }
+  function showKey(key){
+    seeded=false;
+    frozen=key.split("");
+    var prev=lastKey;
+    lastKey=key;
+    renderPath(key.split(""),prev||"");
+  }
+  function step(dir){
+    if(!lastKey||!ended(lastKey.split(""))) return;
+    var i=CATALOG.indexOf(lastKey);
+    if(i<0) return;
+    showKey(CATALOG[(i+dir+CATALOG.length)%CATALOG.length]);
+  }
+  navPrev.addEventListener("click",function(){step(-1);});
+  navNext.addEventListener("click",function(){step(1);});
+  navFlip.addEventListener("click",function(){
+    if(lastKey) showKey(mirrorKey(lastKey));
+  });
+
+  // ---- language toggle ----
+  var langBtn=document.getElementById("lang-btn");
+  function applyLang(){
+    var t=I18N[LANG], bo=2*WINS-1;
+    elEyebrow.textContent=t.eyebrow(bo);
+    elFmtCap.textContent=t.fmtCap(WINS);
+    document.getElementById("fmt-label").textContent=t.fmtLabel;
+    document.getElementById("ana-label").textContent=t.anaLabel;
+    var mopts=document.getElementById("mode-ctl").querySelectorAll(".opt");
+    for(var i=0;i<mopts.length&&i<t.modes.length;i++) mopts[i].textContent=t.modes[i];
+    setAna(curPart&&PARTS[curPart]? PARTS[curPart]() : t.anaDefault,false);
+    shownName="";                                   // force the big label to re-render
+    updateReadout(lastKey? lastKey.split("") : []);
+    langBtn.textContent=LANG==="en"? "한" : "EN";   // shows the language you switch to
+  }
+  langBtn.addEventListener("click",function(){
+    LANG=LANG==="en"? "ko" : "en";
+    applyLang();
+  });
+
+  // ---- interaction lock ----
+  var LOCKED=false;
+  document.getElementById("lock-btn").addEventListener("click",function(){
+    LOCKED=!LOCKED;
+    document.body.classList.toggle("locked",LOCKED);
+    this.setAttribute("aria-pressed",LOCKED?"true":"false");
+  });
+
+  // ---- theme toggle ----
+  var root=document.documentElement;
+  document.getElementById("theme-btn").addEventListener("click",function(){
+    var dark=root.getAttribute("data-theme")
+      ? root.getAttribute("data-theme")==="dark"
+      : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    root.setAttribute("data-theme",dark?"light":"dark");
+  });
+
+  // ---- segmented controls ----
+  function initSeg(ctl,startIdx,onChange){
+    var opts=[].slice.call(ctl.querySelectorAll(".opt"));
+    var thumb=ctl.querySelector(".thumb");
+    function set(i,fire){
+      thumb.style.transform="translateX("+(i*100)+"%)";
+      opts.forEach(function(o,j){
+        o.classList.toggle("active",j===i);
+        o.setAttribute("aria-selected",j===i?"true":"false");
+      });
+      if(fire) onChange(opts[i].getAttribute("data-value"));
+    }
+    opts.forEach(function(o,i){
+      o.addEventListener("click",function(){set(i,true);});
+    });
+    set(startIdx,false);
+  }
+
+  // ---- format (Bo3 / Bo5 / Bo7) & mode ----
+  var elEyebrow=document.getElementById("eyebrow");
+  var elFmtCap=document.getElementById("fmt-caption");
+  var gLattice=document.getElementById("lattice");
+
+  function buildLattice(){                  // interior N×N cell boundaries
+    while(gLattice.firstChild) gLattice.removeChild(gLattice.firstChild);
+    var c=192/WINS;
+    for(var j=1;j<WINS;j++){
+      latLine(48+j*c,240+j*c,240+j*c,48+j*c);   // parallel to the up-right edges
+      latLine(48+j*c,240-j*c,240+j*c,432-j*c);  // parallel to the down-right edges
+    }
+  }
+  function latLine(x1,y1,x2,y2){
+    var ln=document.createElementNS(NS,"line");
+    ln.setAttribute("x1",x1);ln.setAttribute("y1",y1);
+    ln.setAttribute("x2",x2);ln.setAttribute("y2",y2);
+    gLattice.appendChild(ln);
+  }
+
+  function setFormat(n){
+    WINS=n; H=192/n; X0=48+H;
+    flushSeq++;
+    buildLattice();
+    buildAnatomyTicks();
+    buildCatalog();
+    seeded=false;
+    frozen=[]; lastKey="";
+    renderPath([],"");
+    if(MODE==="anatomy") seedWarpath();   // keep the exhibit alive across format changes
+    moveTip(X0,CY);
+    svg.setAttribute("aria-label",
+      "Best-of-"+(2*n-1)+" series diagram. Move the cursor across the diamond to trace a series.");
+    applyLang();
+  }
+
+  var MODE="home";
+  function seedWarpath(){                // one win, so there is a warpath to inspect
+    seeded=true;
+    frozen=["a"]; lastKey="a";
+    renderPath(["a"],"");
+  }
+  function setMode(m){
+    MODE=m;
+    document.body.classList.toggle("mode-settings",m==="settings");
+    document.body.classList.toggle("mode-anatomy",m==="anatomy");
+    if(m==="anatomy" && lastKey===""){
+      seedWarpath();                     // nothing traced yet: give anatomy a path
+    }else if(m!=="anatomy" && seeded){
+      seeded=false;                      // leaving with the seed untouched: back to empty
+      frozen=[]; lastKey="";
+      renderPath([],"");
+    }
+  }
+
+  // ---- language ----
+  var LANG="en";
+  var I18N={
+    en:{
+      // literal "N": identical whatever the format, so the title never shifts
+      eyebrow:function(){return "A Visual Analysis of Best-of-N Series";},
+      trace:"Trace a series",
+      hint:'Move the cursor across the diamond — high in a column for a '+
+        '<b class="up">win</b>, low for a <b class="down">loss</b>.',
+      fmtLabel:"Series format",
+      fmtCap:function(n){return n+"×"+n+" grid · first to "+n+" wins";},
+      anaLabel:"Anatomy",
+      anaDefault:["Hover the diagram","Point at a part to see what it does."],
+      modes:["Home","Anatomy","Settings"]
+    },
+    ko:{
+      eyebrow:function(){return "Best-of-N 시리즈의 시각적 분석";},
+      trace:"시리즈를 그려보세요",
+      hint:'다이아몬드 위에서 커서를 움직여 보세요 — 칸의 위쪽은 '+
+        '<b class="up">승리</b>, 아래쪽은 <b class="down">패배</b>입니다.',
+      fmtLabel:"시리즈 형식",
+      fmtCap:function(n){return n+"×"+n+" 격자 · "+n+"선승제";},
+      anaLabel:"해부도",
+      anaDefault:["다이어그램에 마우스를 올려보세요","부위를 가리키면 역할을 알려드립니다."],
+      modes:["홈","해부도","설정"]
+    }
+  };
+
+  // ---- anatomy parts (name + description per language, format-aware) ----
+  var PARTS={
+    dominance:function(){
+      return LANG==="ko"
+        ? ["우세의 강줄기","두 꼭짓점을 잇는 동률의 물길 — 이 강에 닿은 시리즈는 동점입니다. "+
+           "강의 위쪽은 리드, 아래쪽은 열세입니다."]
+        : ["River of Dominance","The tie river between the two points. A series touching "+
+           "it is level; above it you lead, below it you trail."];
+    },
+    mountain:function(){
+      return LANG==="ko"
+        ? ["승리의 산맥","승리의 결승 능선 — 이기는 시리즈는 모두 이 변을 뚫고 나갑니다. "+
+           "높이가 곧 격차: 정상은 "+WINS+":0, 산기슭은 "+WINS+":"+(WINS-1)+"."]
+        : ["Mountains of Victory","The winning edge. Every victorious series exits through it, "+
+           "and altitude is margin: "+WINS+":0 at the summit, down to "+WINS+":"+(WINS-1)+
+           " at the base."];
+    },
+    valley:function(){
+      return LANG==="ko"
+        ? ["패배의 절벽","패배의 결승 벽 — 지는 시리즈는 모두 이 절벽 아래로 떨어집니다. "+
+           "깊이가 곧 격차: 최저점은 0:"+WINS+", 가장자리는 "+(WINS-1)+":"+WINS+"."]
+        : ["Cliff of Defeat","The losing edge. Every defeated series falls over it, "+
+           "and depth is margin: 0:"+WINS+" at the lowest point, up to "+(WINS-1)+":"+WINS+
+           " near the rim."];
+    },
+    mpwin:function(){
+      return LANG==="ko"
+        ? ["환희의 능선","정상까지 단 한 승만 남긴 매치포인트 칸들 — "+(WINS-1)+"승을 "+
+           "쌓아둔 상태. 여기서 한 걸음만 오르면 승리의 산을 넘습니다."]
+        : ["Ridge of Joy","The match-point cells, one win from the summit — "+
+           (WINS-1)+" wins banked. A single up-step here exits through the Mountains of Victory."];
+    },
+    mplose:function(){
+      return LANG==="ko"
+        ? ["공포의 골짜기","탈락까지 단 한 패만 남은 칸들 — 여기서 한 번만 미끄러지면 "+
+           "패배의 절벽 아래로 떨어집니다."]
+        : ["Valley of Fear","The cells one loss from elimination — a single slip here "+
+           "sends the series over the Cliff of Defeat."];
+    },
+    final:function(){
+      var s=(WINS-1)+":"+(WINS-1);
+      return LANG==="ko"
+        ? ["최후의 곶","전장의 동쪽 끝, 능선과 골짜기가 강어귀에서 만나는 돌출부 — "+s+", "+
+           "승리도 패배도 단 한 경기 앞. 다음 경기가 모든 것을 결정합니다."]
+        : ["The Final Cape","The easternmost headland of the war zone, where Ridge and "+
+           "Valley converge at the river's mouth — "+s+", one game from glory and one "+
+           "from ruin. The next game decides everything."];
+    },
+    warpath:function(){
+      return LANG==="ko"
+        ? ["진군로","당신이 그린 시리즈의 행군 — 서쪽 꼭짓점에서 출발해 게임마다 격전지에 "+
+           "진을 치고, 결승 변을 뚫을 때까지 진격합니다."]
+        : ["The Warpath","The march of the series you traced — it sets out from the western "+
+           "point, camps on one battlefield per game, and pushes until it breaks through a "+
+           "finish edge."];
+    },
+    battlefield:function(){
+      return LANG==="ko"
+        ? ["전장","꼭짓점으로 세워진 "+WINS+"×"+WINS+"개의 격전지 — 가능한 모든 시리즈가 "+
+           "이 네 변 안에서 벌어집니다."]
+        : ["The War Zone","The whole theatre of war — "+WINS+"×"+WINS+" battlefields stood "+
+           "on a point. Every possible series is fought inside these four edges."];
+    },
+    warfront:function(){
+      return LANG==="ko"
+        ? ["격전지","전장의 칸 하나 — 한 경기가 벌어지는 땅입니다. 모든 시리즈는 이 첫 "+
+           "격전지(0:0)에서 시작해, 이기면 우상으로, 지면 우하로 진격합니다."]
+        : ["The Battlefield","One cell of the war zone — the ground where a single game is "+
+           "fought. Every series opens on this first battlefield (0:0), then pushes "+
+           "up-right on a win, down-right on a loss."];
+    }
+  };
+
+  // score ticks along the finish edges — one per possible exit crossing —
+  // plus the match-point cell regions
+  var mLabels=document.getElementById("mountain-labels");
+  var vLabels=document.getElementById("valley-labels");
+  var gMpWin=document.getElementById("mpwin-cells");
+  var gMpLose=document.getElementById("mplose-cells");
+  var gFinal=document.getElementById("final-cell");
+  var gWarfront=document.getElementById("warfront-cells");
+  function buildAnatomyTicks(){
+    [mLabels,vLabels,gMpWin,gMpLose,gFinal,gWarfront].forEach(function(g){
+      while(g.firstChild) g.removeChild(g.firstChild);
+    });
+    // the opening warfront: every series starts its first game in cell (0,0)
+    anaCell(gWarfront,0,0,"wf");
+    for(var i=0;i<WINS;i++){
+      // the clinching win comes from cell (WINS-1, i): crossing on the mountain edge
+      tick(mLabels, 48+(WINS+i)*H+H/2+10, 240-(WINS-1-i)*H-H/2-8, WINS+":"+i);
+      // the final loss comes from cell (i, WINS-1): crossing on the valley edge
+      tick(vLabels, 48+(WINS+i)*H+H/2+10, 240+(WINS-1-i)*H+H/2+14, i+":"+WINS);
+      // match-point cell bands (the shared corner cell is its own part, on top)
+      anaCell(gMpWin, WINS-1, i, "w");
+      anaCell(gMpLose, i, WINS-1, "l");
+    }
+    // the delta carries BOTH hatchings — ridge and cliff overlap here
+    anaCell(gFinal, WINS-1, WINS-1, "w");
+    anaCell(gFinal, WINS-1, WINS-1, "l");
+  }
+  function tick(group,x,y,label){
+    var t=document.createElementNS(NS,"text");
+    t.setAttribute("x",x);t.setAttribute("y",y);
+    t.textContent=label;
+    group.appendChild(t);
+  }
+  function anaCell(group,a,b,cls){
+    var cx=48+(a+b+1)*H, cy=240-(a-b)*H;
+    var poly=document.createElementNS(NS,"polygon");
+    poly.setAttribute("points",
+      (cx-H)+","+cy+" "+cx+","+(cy-H)+" "+(cx+H)+","+cy+" "+cx+","+(cy+H));
+    poly.setAttribute("class","ana-cell "+cls);
+    group.appendChild(poly);
+  }
+  var anaName=document.getElementById("ana-name");
+  var anaDesc=document.getElementById("ana-desc");
+  function setAna(entry,animate){
+    anaName.textContent=entry[0];
+    anaDesc.textContent=entry[1];
+    if(animate){retrigger(anaName,"swap");retrigger(anaDesc,"swap");}
+  }
+  var curPart=null;
+  [].slice.call(svg.querySelectorAll(".ana-part")).forEach(function(part){
+    var key=part.getAttribute("data-part");
+    part.addEventListener("pointerenter",function(){
+      svg.classList.add("ana-dim");
+      svg.classList.add("focus-"+key);
+      part.classList.add("focused");
+      curPart=key;
+      var e=PARTS[key];
+      if(e) setAna(e(),true);
+    });
+    part.addEventListener("pointerleave",function(){
+      svg.classList.remove("ana-dim");
+      svg.classList.remove("focus-"+key);
+      part.classList.remove("focused");
+      curPart=null;
+      setAna(I18N[LANG].anaDefault,true);
+    });
+  });
+
+  initSeg(document.getElementById("mode-ctl"),0,setMode);
+  initSeg(document.getElementById("fmt-ctl"),1,function(v){setFormat(parseInt(v,10));});
+
+  // initial state
+  setFormat(3);
+})();
+</script>
