@@ -131,7 +131,7 @@ function drawReadout(readoutEl: HTMLElement, width: number): HTMLCanvasElement {
   const scoreBEl = readoutEl.querySelector(".s-b");
   const scoreA = scoreAEl?.textContent || "0";
   const scoreB = scoreBEl?.textContent || "0";
-  const scoreFont = scoreAEl ? fontOf(scoreAEl) : "500 14px monospace";
+  const scoreFont = scoreAEl ? fontOf(scoreAEl) : "500 14px sans-serif";
   const scoreColorA = scoreAEl ? getComputedStyle(scoreAEl).color : muted;
   const scoreColorB = scoreBEl ? getComputedStyle(scoreBEl).color : muted;
 

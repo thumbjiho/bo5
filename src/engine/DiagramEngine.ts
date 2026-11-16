@@ -1,4 +1,5 @@
 import type { Game, Lang, Mode, Path, PartKey } from "../types";
+import { resultLetter } from "../data/l10n";
 import { nameFor } from "../data/names";
 import { I18N } from "../data/i18n";
 import { PARTS, gameEntry } from "../data/parts";
@@ -63,6 +64,8 @@ export class DiagramEngine {
   private curPart: PartKey | null = null;
   private curGameIndex: number | null = null; // 0-based column, mutually exclusive with curPart
   onPathChange: ((hasPath: boolean) => void) | null = null;
+  // finished series key (e.g. "bbab") whenever a named outcome is on show, else null
+  onSeriesChange: ((key: string | null) => void) | null = null;
 
   private onPointerMove = (e: PointerEvent) => {
     if (this.mode === "anatomy") return; // anatomy is inspect-only
@@ -460,7 +463,7 @@ export class DiagramEngine {
           }
           const g = document.createElement("span");
           g.className = path[k] === "a" ? "w" : "l";
-          g.textContent = path[k] === "a" ? "W" : "L";
+          g.textContent = resultLetter(path[k] === "a", this.lang);
           name.appendChild(g);
         }
         tagline.textContent = "";
@@ -478,6 +481,7 @@ export class DiagramEngine {
     navNext.disabled = !done;
     navFlip.disabled = path.length === 0;
     this.onPathChange?.(path.length > 0);
+    this.onSeriesChange?.(done ? key : null);
 
     // pagination: position within all possible outcomes of this format
     if (done) {
@@ -496,6 +500,11 @@ export class DiagramEngine {
     const prev = this.lastKey;
     this.lastKey = key;
     this.renderPath(key.split("") as Path, prev || "");
+  }
+
+  // jump straight to a finished outcome (e.g. from the "show all" grid)
+  showSeries(key: string) {
+    this.showKey(key);
   }
 
   private step(dir: 1 | -1) {

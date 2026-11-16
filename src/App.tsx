@@ -1,25 +1,29 @@
-import { useEffect, useRef, useState } from "react";
-import type { Lang, Mode } from "./types";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Lang } from "./types";
 import { I18N } from "./data/i18n";
 import { DiagramEngine, type DiagramRefs } from "./engine/DiagramEngine";
 import { exportDiagramImage } from "./lib/exportImage";
-import { SegControl } from "./components/SegControl";
 import { Diagram } from "./components/Diagram";
 import { Readout } from "./components/Readout";
-import { SettingsPanel } from "./components/SettingsPanel";
 import { AnatomyPanel } from "./components/AnatomyPanel";
 import { ThemeButton } from "./components/ThemeButton";
 import { DownloadButton } from "./components/DownloadButton";
 import { LangButton } from "./components/LangButton";
 import { CursorRing } from "./components/CursorRing";
-
-const MODE_VALUES: Mode[] = ["home", "anatomy", "settings"];
+import { MatchList } from "./components/MatchList";
+import { MatchDetail } from "./components/MatchDetail";
+import { PatternGrid } from "./components/PatternGrid";
+import type { FakerSeries } from "./data/faker";
 
 export function App() {
-  const [mode, setMode] = useState<Mode>("home");
-  const [wins, setWins] = useState(3);
-  const [lang, setLang] = useState<Lang>("en");
+  // Faker edition: Bo5 only, home view only (anatomy/settings parked for now)
+  const wins = 3;
+  const [lang, setLang] = useState<Lang>("ko");
   const [hasPath, setHasPath] = useState(false);
+  const [seriesKey, setSeriesKey] = useState<string | null>(null);
+  const [detail, setDetail] = useState<FakerSeries | null>(null);
+  const [origin, setOrigin] = useState<DOMRect | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   const svgRef = useRef<SVGSVGElement>(null!);
   const cellsRef = useRef<SVGGElement>(null!);
@@ -87,6 +91,7 @@ export function App() {
     };
     const engine = new DiagramEngine(refs);
     engine.onPathChange = setHasPath;
+    engine.onSeriesChange = setSeriesKey;
     engine.mount();
     engineRef.current = engine;
     return () => {
@@ -100,12 +105,6 @@ export function App() {
   useEffect(() => {
     engineRef.current?.setFormat(wins);
   }, [wins]);
-
-  useEffect(() => {
-    document.body.classList.toggle("mode-settings", mode === "settings");
-    document.body.classList.toggle("mode-anatomy", mode === "anatomy");
-    engineRef.current?.setMode(mode);
-  }, [mode]);
 
   useEffect(() => {
     engineRef.current?.setLang(lang);
@@ -125,22 +124,36 @@ export function App() {
     }
   };
 
+  const openDetail = useCallback((s: FakerSeries, from: DOMRect) => {
+    setOrigin(from);
+    setDetail(s);
+  }, []);
+  const closeDetail = useCallback(() => setDetail(null), []);
+  const toggleAll = useCallback(() => setShowAll((v) => !v), []);
+  const closeAll = useCallback(() => setShowAll(false), []);
+  // picking a pattern keeps the grid open: the right-hand list follows the
+  // pick, and only the "모두 보기" toggle (or Esc) returns to the diagram
+  const pickPattern = useCallback((key: string) => {
+    engineRef.current?.showSeries(key);
+  }, []);
+
+  // the page behind an open overlay shouldn't scroll or take the cursor
+  useEffect(() => {
+    document.body.classList.toggle("overlay-open", detail != null);
+  }, [detail]);
+
+  useEffect(() => {
+    document.body.classList.toggle("grid-mode", showAll);
+  }, [showAll]);
+
   const t = I18N[lang];
 
   return (
     <>
-      <SegControl
-        id="mode-ctl"
-        className="mode-ctl"
-        ariaLabel="Page mode"
-        options={MODE_VALUES.map((v, i) => ({ value: v, label: t.modes[i] }))}
-        value={mode}
-        onChange={(v) => setMode(v as Mode)}
-      />
-
       <section className="stage">
         <p className="eyebrow" id="eyebrow">{t.eyebrow()}</p>
 
+        <div className="board-stack">
         <Diagram
           wins={wins}
           svgRef={svgRef}
@@ -160,6 +173,8 @@ export function App() {
           gameMarkersRef={gameMarkersRef}
           dominanceLabelsRef={dominanceLabelsRef}
         />
+        <PatternGrid open={showAll} lang={lang} current={seriesKey} onPick={pickPattern} onClose={closeAll} />
+        </div>
 
         <div className="panels">
           <Readout
@@ -173,10 +188,19 @@ export function App() {
             navPrevRef={navPrevRef}
             navFlipRef={navFlipRef}
             navNextRef={navNextRef}
+            showAllLabel={lang === "ko" ? "모두 보기" : "Show all"}
+            onShowAll={toggleAll}
+            showAllActive={showAll}
           />
-          <SettingsPanel wins={wins} lang={lang} onChangeWins={setWins} />
+          {/* kept mounted (hidden by CSS outside anatomy mode) only because the engine holds its refs */}
           <AnatomyPanel lang={lang} anaNameRef={anaNameRef} anaDescRef={anaDescRef} />
         </div>
+
+        <MatchList
+          seriesKey={seriesKey}
+          lang={lang}
+          onOpen={openDetail}
+        />
       </section>
 
       <p className="credit">
@@ -186,6 +210,7 @@ export function App() {
       <ThemeButton />
       <LangButton lang={lang} onClick={() => setLang(lang === "en" ? "ko" : "en")} />
       <DownloadButton disabled={!hasPath} onClick={handleDownload} />
+      {detail && <MatchDetail series={detail} lang={lang} origin={origin} onClose={closeDetail} />}
       <CursorRing />
     </>
   );

@@ -14,7 +14,7 @@ export interface I18nStrings {
 export const I18N: Record<Lang, I18nStrings> = {
   en: {
     // literal "N": identical whatever the format, so the title never shifts
-    eyebrow: () => "A Visual Analysis of Best-of-N Series",
+    eyebrow: () => "Faker's Bo5 Series · 13 Years, Visualized",
     trace: "Trace a series",
     hint:
       'Move the cursor across the diamond — high in a column for a ' +
@@ -26,7 +26,7 @@ export const I18N: Record<Lang, I18nStrings> = {
     modes: ["Home", "Anatomy", "Settings"],
   },
   ko: {
-    eyebrow: () => "Best-of-N 시리즈의 시각적 분석",
+    eyebrow: () => "13년에 걸친 페이커의 Bo5 시각적 분석",
     trace: "시리즈를 그려보세요",
     hint:
       "다이아몬드 위에서 커서를 움직여 보세요 — 칸의 위쪽은 " +
